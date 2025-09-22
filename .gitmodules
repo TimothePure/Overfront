@@ -1,0 +1,3 @@
+[submodule "Plugins/MultiplayerSessionsHandler"]
+	path = Plugins/MultiplayerSessionsHandler
+	url = https://github.com/TimothePure/MultiplayerSessionsHandler.git
