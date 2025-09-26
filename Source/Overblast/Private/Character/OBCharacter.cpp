@@ -1,13 +1,17 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Overblast/Public/Character/OBCharacter.h"
+#include "Character/OBCharacter.h"
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Components/WidgetComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "Weapons/Weapon.h"
 
 AOBCharacter::AOBCharacter()
 {
@@ -21,19 +25,27 @@ AOBCharacter::AOBCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHeadWidget"));
+	OverheadWidget->SetupAttachment(RootComponent);
 }
 
-void AOBCharacter::Tick(float DeltaTime)
+void AOBCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::Tick(DeltaTime);
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(AOBCharacter, OverlappingWeapon, COND_OwnerOnly);
 }
 
 void AOBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AOBCharacter::DoJumpStart);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AOBCharacter::DoJumpEnd);
 
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AOBCharacter::Move);
 
@@ -44,8 +56,14 @@ void AOBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AOBCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
+
+void AOBCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+#pragma region CHARACTER_MOVEMENT
 
 void AOBCharacter::Move(const FInputActionValue& Value)
 {
@@ -83,7 +101,6 @@ void AOBCharacter::DoLook(float Yaw, float Pitch)
 	}
 }
 
-
 void AOBCharacter::DoJumpStart()
 {
 	Jump();
@@ -93,4 +110,33 @@ void AOBCharacter::DoJumpEnd()
 {
 	StopJumping();
 }
+#pragma endregion CHARACTER_MOVEMENT
 
+void AOBCharacter::SetOverlappingWeapon(AWeapon* Weapon)
+{
+	// Hide previous weapon widget
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->ShowPickupWidget(false);
+	}
+	
+	OverlappingWeapon = Weapon;
+
+	if (IsLocallyControlled() && OverlappingWeapon)
+	{
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+}
+
+void AOBCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) const
+{
+	if (LastWeapon)
+	{
+		LastWeapon->ShowPickupWidget(false);
+	}
+	
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+}
