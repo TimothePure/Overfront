@@ -74,7 +74,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* FireWeaponAction;
 	
-
+	void AimOffset(float DeltaTime);
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	USpringArmComponent* SpringArm;
@@ -96,6 +97,10 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquip();
+
+	float AO_Yaw;
+	float AO_Pitch;
+	FRotator StartingAimRotation;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -113,4 +118,7 @@ public:
 	void SetOverlappingWeapon(AOFWeapon* Weapon);
 	bool IsWeaponEquipped();
 	bool IsAiming();
+
+	FORCEINLINE float GetAOYaw() const { return AO_Yaw; }
+	FORCEINLINE float GetAOPitch() const { return AO_Pitch; }
 };

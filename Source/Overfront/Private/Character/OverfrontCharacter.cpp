@@ -12,6 +12,7 @@
 #include "Components/OFCombatComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapons/OFWeapon.h"
 
@@ -100,6 +101,7 @@ void AOverfrontCharacter::BeginPlay()
 void AOverfrontCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	AimOffset(DeltaTime);
 }
 
 #pragma region CHARACTER_MOVEMENT
@@ -212,6 +214,38 @@ void AOverfrontCharacter::SetOverlappingWeapon(AOFWeapon* Weapon)
 	if (IsLocallyControlled() && OverlappingWeapon)
 	{
 		OverlappingWeapon->ShowPickupWidget(true);
+	}
+}
+
+void AOverfrontCharacter::AimOffset(float DeltaTime)
+{
+	if (CombatComponent && !CombatComponent->EquippedWeapon) return;
+	
+	FVector Velocity = GetVelocity(); 
+	Velocity.Z = 0.f;
+	float Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+
+	if (Speed == 0.f && !bIsInAir) // standing still, not jumping
+	{
+		FRotator CurrentAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
+		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
+		AO_Yaw = DeltaAimRotation.Yaw;
+		bUseControllerRotationYaw = false;
+	} else // Running or jumping
+	{
+		StartingAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
+		AO_Yaw = 0.f;
+		bUseControllerRotationYaw = true;
+	}
+
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.f && !IsLocallyControlled())
+	{
+		// map pitch from [270, 360) to [-90, 0)
+		FVector2D InRange(270.f, 360.f);
+		FVector2D OutRange(-90.f, 0.f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
 	}
 }
 
