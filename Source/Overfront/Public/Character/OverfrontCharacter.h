@@ -33,7 +33,8 @@ protected:
 	void LookInput(const FInputActionValue& Value);
 
 	void EquipInput(const FInputActionValue& Value);
-	void CrouchInput(const FInputActionValue& Value);
+	void CrouchInputStart(const FInputActionValue& Value);
+	void CrouchInputStop(const FInputActionValue& Value);
 	void AimInputStart(const FInputActionValue& Value);
 	void AimInputEnd(const FInputActionValue& Value);
 

@@ -5,6 +5,7 @@
 
 #include "Character/OverfrontCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void UOFAnimInstance::NativeInitializeAnimation()
 {
@@ -33,4 +34,18 @@ NativeUpdateAnimation(float DeltaSeconds)
 	bWeaponEquipped = Character->IsWeaponEquipped();
 	bIsCrouched = Character->bIsCrouched;
 	bAiming = Character->IsAiming();
+
+	// Yaw offset for strafing
+	FRotator AimRotation = Character->GetBaseAimRotation();
+	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(Character->GetVelocity());
+	FRotator DeltaRot = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AimRotation);
+	DeltaRotation = FMath::RInterpTo(DeltaRotation, DeltaRot, DeltaSeconds, 6.f);
+	YawOffest = DeltaRotation.Yaw;
+	
+	PreviousCharacterRotation = CharacterRotation;
+	CharacterRotation = Character->GetActorRotation();
+	const FRotator Delta = UKismetMathLibrary::NormalizedDeltaRotator(CharacterRotation, PreviousCharacterRotation);
+	const float Target = Delta.Yaw / DeltaSeconds;
+	const float Interp = FMath::FInterpTo(Lean, Target, DeltaSeconds, 6.f);
+	Lean = FMath::Clamp(Interp, -90.f, 90.f);
 }

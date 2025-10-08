@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/OFCombatComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -37,6 +38,8 @@ AOverfrontCharacter::AOverfrontCharacter()
 	CombatComponent->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 void AOverfrontCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -57,8 +60,6 @@ void AOverfrontCharacter::PostInitializeComponents()
 
 void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Red, "SetupPlayerInputComponent");
-	
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AOverfrontCharacter::DoJumpStart);
@@ -68,7 +69,8 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::LookInput);
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::EquipInput);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::CrouchInput);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AOverfrontCharacter::CrouchInputStart);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::CrouchInputStop);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AOverfrontCharacter::AimInputStart);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::AimInputEnd);
 		// EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::CrouchInput);
@@ -128,16 +130,14 @@ void AOverfrontCharacter::EquipInput(const FInputActionValue& Value)
 	}
 }
 
-void AOverfrontCharacter::CrouchInput(const FInputActionValue& Value)
+void AOverfrontCharacter::CrouchInputStart(const FInputActionValue& Value)
 {
-	if (bIsCrouched)
-	{
-		UnCrouch();
-	} else
-	{
-		Crouch();
-		
-	}
+	Crouch();
+}
+
+void AOverfrontCharacter::CrouchInputStop(const FInputActionValue& Value)
+{
+	UnCrouch();
 }
 
 void AOverfrontCharacter::AimInputStart(const FInputActionValue& Value)

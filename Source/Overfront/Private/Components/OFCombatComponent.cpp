@@ -5,6 +5,7 @@
 
 #include "Character/OverfrontCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapons/OFWeapon.h"
 
@@ -12,24 +13,45 @@
 UOFCombatComponent::UOFCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-
+	BaseWalkSpeed = 600.0f;
+	AimWalkSpeed = 400.0f;
 }
 
 void UOFCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
 }
 
 void UOFCombatComponent::SetAiming(bool bIsAiming)
 {
 	bAiming = bIsAiming;
 	ServerSetAiming(bIsAiming);
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
 }
 
 void UOFCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 {
-	bAiming = bIsAiming; 
+	bAiming = bIsAiming;
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+}
+
+void UOFCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquippedWeapon && Character)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }
 
 void UOFCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -57,4 +79,6 @@ void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
 	}
 
 	EquippedWeapon->SetOwner(Character);
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
 }
