@@ -28,6 +28,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void Jump() override;
 	
 	UFUNCTION(BlueprintCallable, Category="Input")
 	void MoveInput(const FInputActionValue& Value);

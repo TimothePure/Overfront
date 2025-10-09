@@ -101,6 +101,15 @@ void AOverfrontCharacter::BeginPlay()
 	}
 }
 
+void AOverfrontCharacter::Jump()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+	Super::Jump();  
+}
+
 void AOverfrontCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

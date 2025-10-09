@@ -14,8 +14,7 @@ void UOFAnimInstance::NativeInitializeAnimation()
 	Character = Cast<AOverfrontCharacter>(TryGetPawnOwner());
 }
 
-void UOFAnimInstance::
-NativeUpdateAnimation(float DeltaSeconds)
+void UOFAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
