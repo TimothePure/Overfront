@@ -41,6 +41,8 @@ AOverfrontCharacter::AOverfrontCharacter()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 }
 
 void AOverfrontCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -74,7 +76,6 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::CrouchInputStop);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AOverfrontCharacter::AimInputStart);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::AimInputEnd);
-		// EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::CrouchInput);
 	}
 }
 
@@ -166,6 +167,7 @@ void AOverfrontCharacter::ServerEquip_Implementation()
 	}
 }
 
+
 void AOverfrontCharacter::DoMove(float Right, float Forward)
 {
 	if (GetController() != nullptr)
@@ -231,12 +233,18 @@ void AOverfrontCharacter::AimOffset(float DeltaTime)
 		FRotator CurrentAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
 		AO_Yaw = DeltaAimRotation.Yaw;
-		bUseControllerRotationYaw = false;
+		if (TurningInPlace == ETurningInPlace::ETIP_NotTurning)
+		{
+			InterpAO_Yaw = AO_Yaw;
+		}
+		bUseControllerRotationYaw = true;
+		TurnInPlace(DeltaTime);
 	} else // Running or jumping
 	{
 		StartingAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
 		AO_Yaw = 0.f;
 		bUseControllerRotationYaw = true;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
@@ -246,6 +254,28 @@ void AOverfrontCharacter::AimOffset(float DeltaTime)
 		FVector2D InRange(270.f, 360.f);
 		FVector2D OutRange(-90.f, 0.f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
+}
+
+void AOverfrontCharacter::TurnInPlace(float DeltaTime)
+{
+	if (AO_Yaw > 90.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_Right;
+	} else if (AO_Yaw < -90.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_Left;
+	}
+	
+	if (TurningInPlace != ETurningInPlace::ETIP_NotTurning)
+	{
+		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 4.f);
+		AO_Yaw = InterpAO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.f)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+			StartingAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
+		}
 	}
 }
 
@@ -270,4 +300,10 @@ bool AOverfrontCharacter::IsWeaponEquipped()
 bool AOverfrontCharacter::IsAiming()
 {
 	return  (CombatComponent && CombatComponent->bAiming);
+}
+
+AOFWeapon* AOverfrontCharacter::GetEquippedWeapon()
+{
+	if (CombatComponent == nullptr) return nullptr;
+	return CombatComponent->EquippedWeapon;
 }

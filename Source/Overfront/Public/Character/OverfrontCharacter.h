@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Overfront/Enums/OFTurningInPlace.h"
 #include "OverfrontCharacter.generated.h"
 
 class USpringArmComponent;
@@ -99,9 +100,12 @@ private:
 	void ServerEquip();
 
 	float AO_Yaw;
+	float InterpAO_Yaw;
 	float AO_Pitch;
 	FRotator StartingAimRotation;
-	
+
+	ETurningInPlace TurningInPlace;
+	void TurnInPlace(float DeltaTime);
 public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
@@ -121,4 +125,6 @@ public:
 
 	FORCEINLINE float GetAOYaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAOPitch() const { return AO_Pitch; }
+	AOFWeapon* GetEquippedWeapon();
+	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 };
