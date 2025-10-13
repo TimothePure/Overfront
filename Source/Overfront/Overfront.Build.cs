@@ -20,6 +20,7 @@ public class Overfront : ModuleRules
 			"OnlineSubsystemSteam",
 			"OnlineSubsystem",
 			"SteamSockets",
+			"PhysicsCore", 
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

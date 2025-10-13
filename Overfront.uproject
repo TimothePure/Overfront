@@ -21,6 +21,10 @@
 		{
 			"Name": "GPULightmass",
 			"Enabled": true
+		},
+		{
+			"Name": "PluginReferenceViewer",
+			"Enabled": true
 		}
 	]
 }
