@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "OFCombatComponent.generated.h"
 
+
+#define TRACE_LENGTH 80000.f
 class AOFWeapon;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -33,10 +35,12 @@ protected:
 	void FireInput(bool bPressed);
 
 	UFUNCTION(Server, Reliable)
-	void ServerFire();
+	void ServerFire(const FVector_NetQuantize& HitTarget);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire();
+	void MulticastFire(const FVector_NetQuantize& HitTarget);
+
+	void TraceUnderCrosshairs(FHitResult& HitResult);
 private:
 	AOverfrontCharacter* Character;
 

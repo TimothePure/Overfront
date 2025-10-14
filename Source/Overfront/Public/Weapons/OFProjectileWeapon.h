@@ -12,14 +12,16 @@ class OVERFRONT_API AOFProjectileWeapon : public AOFWeapon
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	AOFProjectileWeapon();
+	virtual void Fire(const FVector& HitTarget) override;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+private:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AOFProjectile> ProjectileClass;
 };

@@ -2,23 +2,50 @@
 
 
 #include "Weapons/OFProjectileWeapon.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "Weapons/OFProjectile.h"
 
 
-// Sets default values
-AOFProjectileWeapon::AOFProjectileWeapon()
+AOFProjectileWeapon::  AOFProjectileWeapon()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
+void AOFProjectileWeapon::Fire(const FVector& HitTarget)
+{
+	Super::Fire(HitTarget);
+
+	if (!HasAuthority()) return;
+	
+	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
+	const USkeletalMeshSocket* MuzzfleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
+
+	if (MuzzfleFlashSocket)
+	{
+		FTransform SocketTransform = MuzzfleFlashSocket->GetSocketTransform(GetWeaponMesh());
+		// From Muzzle flash socket to hit location from TraceUnderCrosshairs
+		FVector ToTarget = HitTarget - SocketTransform.GetLocation();
+		FRotator TargetRotation = ToTarget.Rotation();
+		
+		if (ProjectileClass && InstigatorPawn)
+		{
+			if (UWorld* World = GetWorld())
+			{
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.Owner = GetOwner();
+				SpawnParams.Instigator = InstigatorPawn;
+				World->SpawnActor<AOFProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+			}
+		}
+	}
+}
+
 void AOFProjectileWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
 void AOFProjectileWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

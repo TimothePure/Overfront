@@ -44,7 +44,7 @@ void AOFWeapon::ShowPickupWidget(bool bShowWidget)
 	}
 }
 
-void AOFWeapon::Fire()
+void AOFWeapon::Fire(const FVector& HitTarget)
 {
 	if (FireAnimation)
 	{
