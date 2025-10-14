@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Character/OFAnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/OFCombatComponent.h"
 #include "Components/WidgetComponent.h"
@@ -63,6 +64,20 @@ void AOverfrontCharacter::PostInitializeComponents()
 	}
 }
 
+void AOverfrontCharacter::PlayFireMontage(bool bAiming)
+{
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireWeaponMontage)
+	{
+		AnimInstance->Montage_Play(FireWeaponMontage);
+		FName SectionName;
+		SectionName = bAiming ? FName("RifleIronsights") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
@@ -78,6 +93,8 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::CrouchInputStop);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AOverfrontCharacter::AimInputStart);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::AimInputEnd);
+		EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &AOverfrontCharacter::FireInputStart);
+        EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::FireInputEnd);
 	}
 }
 
@@ -167,6 +184,22 @@ void AOverfrontCharacter::AimInputEnd(const FInputActionValue& Value)
 	if (CombatComponent)
 	{
 		CombatComponent->SetAiming(false);
+	}
+}
+
+void AOverfrontCharacter::FireInputStart(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		CombatComponent->FireInput(true);
+	}
+}
+
+void AOverfrontCharacter::FireInputEnd(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		CombatComponent->FireInput(false);
 	}
 }
 

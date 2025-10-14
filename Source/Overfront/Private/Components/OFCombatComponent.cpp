@@ -17,6 +17,14 @@ UOFCombatComponent::UOFCombatComponent()
 	AimWalkSpeed = 400.0f;
 }
 
+void UOFCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UOFCombatComponent, EquippedWeapon);
+	DOREPLIFETIME(UOFCombatComponent, bAiming);
+}
+
+
 void UOFCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -54,17 +62,33 @@ void UOFCombatComponent::OnRep_EquippedWeapon()
 	}
 }
 
+void UOFCombatComponent::FireInput(bool bPressed)
+{
+	bFireInputPressed = bPressed;
+	
+	if (bFireInputPressed)
+	{
+		ServerFire();
+	}
+}
+
+void UOFCombatComponent::ServerFire_Implementation()
+{
+	MulticastFire();
+}
+
+void UOFCombatComponent::MulticastFire_Implementation()
+{
+	if (EquippedWeapon == nullptr || Character == nullptr) return;
+	
+	Character->PlayFireMontage(bAiming);
+	EquippedWeapon->Fire();
+}
+
 void UOFCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-}
-
-void UOFCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UOFCombatComponent, EquippedWeapon);
-	DOREPLIFETIME(UOFCombatComponent, bAiming);
 }
 
 void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)

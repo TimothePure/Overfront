@@ -30,6 +30,13 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	void FireInput(bool bPressed);
+
+	UFUNCTION(Server, Reliable)
+	void ServerFire();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastFire();
 private:
 	AOverfrontCharacter* Character;
 
@@ -44,4 +51,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float AimWalkSpeed;
+
+	bool bFireInputPressed;
 };

@@ -8,7 +8,6 @@
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 
-
 AOFWeapon::AOFWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -42,6 +41,14 @@ void AOFWeapon::ShowPickupWidget(bool bShowWidget)
 	if (PickupWidget)
 	{
 		PickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
+void AOFWeapon::Fire()
+{
+	if (FireAnimation)
+	{
+		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}
 }
 

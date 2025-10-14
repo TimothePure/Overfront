@@ -24,7 +24,7 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
-	
+	void PlayFireMontage(bool bAiming);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -39,6 +39,8 @@ protected:
 	void CrouchInputStop(const FInputActionValue& Value);
 	void AimInputStart(const FInputActionValue& Value);
 	void AimInputEnd(const FInputActionValue& Value);
+	void FireInputStart(const FInputActionValue& Value);
+	void FireInputEnd(const FInputActionValue& Value);
 
 	/** Default Input Mapping Context **/
 	UPROPERTY(EditAnywhere, Category="Input")
@@ -107,6 +109,9 @@ private:
 
 	ETurningInPlace TurningInPlace;
 	void TurnInPlace(float DeltaTime);
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	class UAnimMontage* FireWeaponMontage;
 public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
