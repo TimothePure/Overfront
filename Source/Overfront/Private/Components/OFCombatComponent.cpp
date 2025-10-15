@@ -8,7 +8,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "PlayerController/OFPlayerController.h"
 #include "Weapons/OFWeapon.h"
+#include "Widgets/OFHUD.h"
 
 
 UOFCombatComponent::UOFCombatComponent()
@@ -33,6 +35,12 @@ void UOFCombatComponent::BeginPlay()
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	}
+}
+
+void UOFCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	SetHUDCrosshair(DeltaTime);
 }
 
 void UOFCombatComponent::SetAiming(bool bIsAiming)
@@ -115,9 +123,60 @@ void UOFCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 	}
 }
 
-void UOFCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UOFCombatComponent::SetHUDCrosshair(float DeltaTime)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (Character == nullptr || Character->Controller == nullptr) return;
+	
+	Controller = Controller == nullptr ? Cast<AOFPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		HUD = HUD == nullptr ? Cast<AOFHUD>(Controller->GetHUD()) : HUD;
+		if (HUD)
+		{
+			FHUDPackage HUDPackage;
+			if (EquippedWeapon)
+			{
+				HUDPackage.CrosshairCenter = EquippedWeapon->CrosshairCenter;
+				HUDPackage.CrosshairLeft = EquippedWeapon->CrosshairLeft;
+				HUDPackage.CrosshairRight = EquippedWeapon->CrosshairRight;
+				HUDPackage.CrosshairTop = EquippedWeapon->CrosshairTop;
+				HUDPackage.CrosshairBottom = EquippedWeapon->CrosshairBottom;
+			} else
+			{
+				HUDPackage.CrosshairCenter = nullptr;
+				HUDPackage.CrosshairLeft = nullptr;
+				HUDPackage.CrosshairRight = nullptr;
+				HUDPackage.CrosshairTop = nullptr;
+				HUDPackage.CrosshairBottom = nullptr; 
+			}
+
+			// Calculate crosshair spread
+			FVector2D MaxSpeedRange(0.f, Character->GetCharacterMovement()->MaxWalkSpeed);
+			FVector2D VelocityMultiplierRangeAiming(0.f, 1.f);
+			FVector2D VelocityMultiplierRange(0.3f, 1.f);
+			
+			FVector Velocity = Character->GetVelocity();
+			Velocity.Z = 0.f;
+
+			CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(
+				MaxSpeedRange,
+				bAiming ? VelocityMultiplierRangeAiming : VelocityMultiplierRange,
+				bAiming ? Velocity.Size() / 3 : Velocity.Size());
+			
+			if (Character->GetCharacterMovement()->IsFalling())
+			{
+				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
+			} else
+			{
+				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
+			}
+
+			HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
+			
+
+			HUD->SetHUDPackage(HUDPackage);
+		}
+	}
 }
 
 void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)

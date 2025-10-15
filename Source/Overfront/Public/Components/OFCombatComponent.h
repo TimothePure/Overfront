@@ -22,6 +22,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void EquipWeapon(AOFWeapon* WeaponToEquip);
+	
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -41,8 +42,13 @@ protected:
 	void MulticastFire(const FVector_NetQuantize& HitTarget);
 
 	void TraceUnderCrosshairs(FHitResult& HitResult);
+
+	void SetHUDCrosshair(float DeltaTime);
+	
 private:
-	AOverfrontCharacter* Character;
+	class AOverfrontCharacter* Character;
+	class AOFPlayerController* Controller;
+	class AOFHUD* HUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AOFWeapon* EquippedWeapon;
@@ -57,4 +63,8 @@ private:
 	float AimWalkSpeed;
 
 	bool bFireInputPressed;
+
+	// HUD and Crosshair
+	float CrosshairVelocityFactor;
+	float CrosshairInAirFactor;
 };

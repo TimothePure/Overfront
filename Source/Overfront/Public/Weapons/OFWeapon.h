@@ -27,6 +27,23 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
+
+	// Textures for the weapon crosshairs
+	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	class UTexture2D* CrosshairCenter;
+
+	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UTexture2D* CrosshairLeft;
+
+	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UTexture2D* CrosshairRight;
+
+	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UTexture2D* CrosshairTop;
+
+	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UTexture2D* CrosshairBottom;
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -58,6 +75,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	TSubclassOf<class AOFBulletShell> BulletShellClass;
+	
 public:
 	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
