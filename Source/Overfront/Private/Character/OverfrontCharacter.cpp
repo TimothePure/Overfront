@@ -351,3 +351,10 @@ AOFWeapon* AOverfrontCharacter::GetEquippedWeapon()
 	if (CombatComponent == nullptr) return nullptr;
 	return CombatComponent->EquippedWeapon;
 }
+
+FVector AOverfrontCharacter::GetHitTarget() const
+{
+	if (CombatComponent == nullptr) return FVector(0, 0, 0);
+
+	return CombatComponent->Target;
+}

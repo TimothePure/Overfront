@@ -63,5 +63,12 @@ void UOFAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		Character->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator(LeftHandTransform.GetRotation()), OutPosition, OutRotation);
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
+
+		if (Character->IsLocallyControlled())
+		{
+			bLocallyControlled = true;
+			FTransform RightHandTransform = Character->GetMesh()->GetSocketTransform(FName("hand_r"), RTS_World);
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - Character->GetHitTarget()));
+		} 
 	}
 }

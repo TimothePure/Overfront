@@ -8,6 +8,8 @@
 
 
 #define TRACE_LENGTH 80000.f
+#define CAMERA_IGNORE_DISTANCE = 350.f;
+
 class AOFWeapon;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -67,4 +69,8 @@ private:
 	// HUD and Crosshair
 	float CrosshairVelocityFactor;
 	float CrosshairInAirFactor;
+
+	FVector Target;
+
+	float CameraIgnoreDistance;
 };

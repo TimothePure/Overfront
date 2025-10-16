@@ -6,6 +6,7 @@
 #include "Character/OverfrontCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/OFPlayerController.h"
@@ -35,12 +36,20 @@ void UOFCombatComponent::BeginPlay()
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	}
+	CameraIgnoreDistance = Character->GetSpringArm()->TargetArmLength;
 }
 
 void UOFCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	SetHUDCrosshair(DeltaTime);
+
+	if (Character && Character->IsLocallyControlled())
+	{
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
+		Target = HitResult.ImpactPoint;
+	}
 }
 
 void UOFCombatComponent::SetAiming(bool bIsAiming)
@@ -105,8 +114,8 @@ void UOFCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 	}
 
 	FVector2D CrosshairLocation(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
-	FVector CrosshairWorldPosition;
-	FVector CrosshairWorldDirection;
+	FVector CrosshairWorldPosition, CrosshairWorldDirection;
+	
 	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
 		UGameplayStatics::GetPlayerController(this, 0),
 		CrosshairLocation,
@@ -120,6 +129,9 @@ void UOFCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
 		
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
+
+		float DistToCamera = (HitResult.ImpactPoint - Start).Size();
+		if (!HitResult.bBlockingHit || DistToCamera < CameraIgnoreDistance) HitResult.ImpactPoint = End;
 	}
 }
 
