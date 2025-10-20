@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/OFInteractWithCrosshairInterface.h"
 #include "Overfront/Enums/OFTurningInPlace.h"
 #include "OverfrontCharacter.generated.h"
 
@@ -14,7 +15,7 @@ class UInputMappingContext;
 struct FInputActionValue;
 
 UCLASS()
-class OVERFRONT_API AOverfrontCharacter : public ACharacter
+class OVERFRONT_API AOverfrontCharacter : public ACharacter, public IOFInteractWithCrosshairInterface
 {
 	GENERATED_BODY()
 
@@ -25,6 +26,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHit();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -79,6 +83,7 @@ protected:
 	UInputAction* FireWeaponAction;
 	
 	void AimOffset(float DeltaTime);
+	void PlayHitReactMontage();
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -112,6 +117,14 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	class UAnimMontage* FireWeaponMontage;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	UAnimMontage* HitReactMontage;
+
+	void HideCharacterIfCameraClose();
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float PlayerHideThresold = 200.f;
 public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
@@ -135,4 +148,5 @@ public:
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
 	FORCEINLINE USpringArmComponent* GetSpringArm() const { return SpringArm; }
+	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
