@@ -48,8 +48,8 @@ AOverfrontCharacter::AOverfrontCharacter()
 	
 
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
-	NetUpdateFrequency = 66.f;
-	MinNetUpdateFrequency = 33.f;
+	SetNetUpdateFrequency(66.f);
+	SetMinNetUpdateFrequency(33.f);
 }
 
 void AOverfrontCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -115,6 +115,13 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	}
 }
 
+void AOverfrontCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.f;
+}
+
 void AOverfrontCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -147,7 +154,19 @@ void AOverfrontCharacter::Jump()
 void AOverfrontCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	AimOffset(DeltaTime);
+	if (GetLocalRole() > ROLE_SimulatedProxy && IsLocallyControlled())
+	{
+		AimOffset(DeltaTime);
+	} else
+	{
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > 0.25f)
+		{
+			OnRep_ReplicatedMovement();
+		}
+		CalculateAO_Pitch();
+	}
+	HideCharacterIfCameraClose();
 }
 
 #pragma region CHARACTER_MOVEMENT
@@ -305,17 +324,33 @@ void AOverfrontCharacter::SetOverlappingWeapon(AOFWeapon* Weapon)
 	}
 }
 
+void AOverfrontCharacter::CalculateAO_Pitch()
+{
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.f && !IsLocallyControlled())
+	{
+		// map pitch from [270, 360) to [-90, 0)
+		FVector2D InRange(270.f, 360.f);
+		FVector2D OutRange(-90.f, 0.f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
+}
+
+float AOverfrontCharacter::CalculateSpeed()
+{
+	FVector Velocity = GetVelocity(); 
+	Velocity.Z = 0.f;
+	return Velocity.Size();
+}
+
 void AOverfrontCharacter::AimOffset(float DeltaTime)
 {
 	if (CombatComponent && !CombatComponent->EquippedWeapon) return;
-	
-	FVector Velocity = GetVelocity(); 
-	Velocity.Z = 0.f;
-	float Speed = Velocity.Size();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 
-	if (Speed == 0.f && !bIsInAir) // standing still, not jumping
+	if (CalculateSpeed() == 0.f && !bIsInAir) // standing still, not jumping
 	{
+		bRotateRootBone = true;
 		FRotator CurrentAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
 		AO_Yaw = DeltaAimRotation.Yaw;
@@ -327,20 +362,46 @@ void AOverfrontCharacter::AimOffset(float DeltaTime)
 		TurnInPlace(DeltaTime);
 	} else // Running or jumping
 	{
+		bRotateRootBone = false;
 		StartingAimRotation = FRotator(0, GetBaseAimRotation().Yaw, 0);
 		AO_Yaw = 0.f;
 		bUseControllerRotationYaw = true;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 
-	AO_Pitch = GetBaseAimRotation().Pitch;
-	if (AO_Pitch > 90.f && !IsLocallyControlled())
+	CalculateAO_Pitch();
+}
+
+void AOverfrontCharacter::SimProxiesTurn()
+{
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
+
+	bRotateRootBone = false;
+
+	if (CalculateSpeed() > 0.f)
 	{
-		// map pitch from [270, 360) to [-90, 0)
-		FVector2D InRange(270.f, 360.f);
-		FVector2D OutRange(-90.f, 0.f);
-		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
 	}
+	ProxyRotationLastFrame = ProxyRotation;
+	ProxyRotation = GetActorRotation();
+	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+
+	if (FMath::Abs(ProxyYaw) > TurnThresold)
+	{
+		if (ProxyYaw > TurnThresold)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_Right;
+		} else if (ProxyYaw < -TurnThresold)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_Left;
+		} else
+		{
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		}
+		return;
+	}
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 }
 
 void AOverfrontCharacter::TurnInPlace(float DeltaTime)

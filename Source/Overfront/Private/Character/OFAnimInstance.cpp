@@ -36,6 +36,7 @@ void UOFAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsCrouched = Character->bIsCrouched;
 	bAiming = Character->IsAiming();
 	TurningInPlace = Character->GetTurningInPlace();
+	bRotateRootBone = Character->ShouldRotateRootBone();
 
 	// Yaw offset for strafing
 	FRotator AimRotation = Character->GetBaseAimRotation();
