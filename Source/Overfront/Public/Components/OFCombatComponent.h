@@ -35,6 +35,7 @@ protected:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+	
 
 	void FireInput(bool bPressed);
 
@@ -47,7 +48,8 @@ protected:
 	void TraceUnderCrosshairs(FHitResult& HitResult);
 
 	void SetHUDCrosshair(float DeltaTime);
-	
+
+	void Fire();
 private:
 	class AOverfrontCharacter* Character;
 	class AOFPlayerController* Controller;
@@ -88,4 +90,11 @@ private:
 	float ZoomInterpSpeed = 20.f;
 
 	void InterpFOV(float DeltaTime);
+
+	// Automatic Fire
+	FTimerHandle FireTimer;
+	bool bCanFire = true;
+
+	void StartFireTimer();
+	void FireTimerFinished();
 };

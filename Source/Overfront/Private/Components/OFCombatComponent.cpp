@@ -29,7 +29,6 @@ void UOFCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	DOREPLIFETIME(UOFCombatComponent, bAiming);
 }
 
-
 void UOFCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -59,6 +58,91 @@ void UOFCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	}
 }
 
+#pragma region FiringWeapon
+
+void UOFCombatComponent::FireInput(bool bPressed)
+{
+	bFireInputPressed = bPressed;
+	
+	if (bFireInputPressed)
+	{
+		Fire();
+	}
+}
+
+void UOFCombatComponent::Fire()
+{
+	if (bCanFire && EquippedWeapon)
+	{
+		bCanFire = false;
+		ServerFire(Target);
+		CrosshairShootingFactor = 0.75f;
+		StartFireTimer();
+	}
+}
+
+void UOFCombatComponent::StartFireTimer()
+{
+	if (EquippedWeapon == nullptr || Character == nullptr) return;
+	Character->GetWorldTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, EquippedWeapon->FireDelay);
+}
+
+void UOFCombatComponent::FireTimerFinished()
+{
+	if (EquippedWeapon == nullptr) return;
+	bCanFire = true;
+	if (bFireInputPressed && EquippedWeapon->bAutomaticFire)
+	{
+		Fire();
+	}
+}
+
+void UOFCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	MulticastFire(TraceHitTarget);
+}
+
+void UOFCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	if (EquippedWeapon == nullptr || Character == nullptr) return;
+	
+	Character->PlayFireMontage(bAiming);
+	EquippedWeapon->Fire(TraceHitTarget);
+}
+
+#pragma endregion FiringWeapon
+
+#pragma region EquippingWeapon
+
+void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
+{
+	if (Character == nullptr || WeaponToEquip == nullptr) return;
+
+	EquippedWeapon = WeaponToEquip;
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
+	{
+		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+	}
+
+	EquippedWeapon->SetOwner(Character);
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
+}
+
+void UOFCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquippedWeapon && Character)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
+}
+
+#pragma endregion EquippingWeapon
+
+#pragma region Aiming
+
 void UOFCombatComponent::SetAiming(bool bIsAiming)
 {
 	bAiming = bIsAiming;
@@ -76,45 +160,6 @@ void UOFCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
 	}
-}
-
-void UOFCombatComponent::OnRep_EquippedWeapon()
-{
-	if (EquippedWeapon && Character)
-	{
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-	}
-}
-
-void UOFCombatComponent::FireInput(bool bPressed)
-{
-	bFireInputPressed = bPressed;
-	
-	if (bFireInputPressed)
-	{
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		ServerFire(HitResult.ImpactPoint);
-
-		if (EquippedWeapon)
-		{
-			CrosshairShootingFactor = 0.75f;
-		}
-	}
-}
-
-void UOFCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	MulticastFire(TraceHitTarget);
-}
-
-void UOFCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	if (EquippedWeapon == nullptr || Character == nullptr) return;
-	
-	Character->PlayFireMontage(bAiming);
-	EquippedWeapon->Fire(TraceHitTarget);
 }
 
 void UOFCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
@@ -233,18 +278,4 @@ void UOFCombatComponent::InterpFOV(float DeltaTime)
 	}
 }
 
-void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
-{
-	if (Character == nullptr || WeaponToEquip == nullptr) return;
-
-	EquippedWeapon = WeaponToEquip;
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
-	{
-		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-	}
-
-	EquippedWeapon->SetOwner(Character);
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
-}
+#pragma endregion Aiming
