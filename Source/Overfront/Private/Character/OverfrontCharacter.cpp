@@ -2,7 +2,6 @@
 
 
 #include "Character/OverfrontCharacter.h"
-
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
@@ -17,6 +16,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Overfront/Overfront.h"
 #include "Weapons/OFWeapon.h"
+
+#pragma region ClassSetup
 
 AOverfrontCharacter::AOverfrontCharacter()
 {
@@ -68,33 +69,6 @@ void AOverfrontCharacter::PostInitializeComponents()
 	}
 }
 
-void AOverfrontCharacter::PlayFireMontage(bool bAiming)
-{
-	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
-
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && FireWeaponMontage)
-	{
-		AnimInstance->Montage_Play(FireWeaponMontage);
-		FName SectionName;
-		SectionName = bAiming ? FName("RifleIronsights") : FName("RifleHip");
-		AnimInstance->Montage_JumpToSection(SectionName);
-	}
-}
-
-void AOverfrontCharacter::PlayHitReactMontage()
-{
-	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
-
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && HitReactMontage)
-	{
-		AnimInstance->Montage_Play(HitReactMontage);
-		FName SectionName("FromFront");
-		AnimInstance->Montage_JumpToSection(SectionName);
-	}
-}
-
 void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
@@ -113,13 +87,6 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &AOverfrontCharacter::FireInputStart);
         EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::FireInputEnd);
 	}
-}
-
-void AOverfrontCharacter::OnRep_ReplicatedMovement()
-{
-	Super::OnRep_ReplicatedMovement();
-	SimProxiesTurn();
-	TimeSinceLastMovementReplication = 0.f;
 }
 
 void AOverfrontCharacter::BeginPlay()
@@ -142,15 +109,6 @@ void AOverfrontCharacter::BeginPlay()
 	}
 }
 
-void AOverfrontCharacter::Jump()
-{
-	if (bIsCrouched)
-	{
-		UnCrouch();
-	}
-	Super::Jump();  
-}
-
 void AOverfrontCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -169,7 +127,18 @@ void AOverfrontCharacter::Tick(float DeltaTime)
 	HideCharacterIfCameraClose();
 }
 
-#pragma region CHARACTER_MOVEMENT
+#pragma endregion ClassSetup
+
+#pragma region CharacterMovement
+
+void AOverfrontCharacter::Jump()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+	Super::Jump();  
+}
 
 void AOverfrontCharacter::MoveInput(const FInputActionValue& Value)
 {
@@ -183,20 +152,6 @@ void AOverfrontCharacter::LookInput(const FInputActionValue& Value)
 	DoLook(LookAxisVector.X, LookAxisVector.Y);
 }
 
-void AOverfrontCharacter::EquipInput(const FInputActionValue& Value)
-{
-	if (CombatComponent)
-	{
-		if (HasAuthority())
-		{
-			CombatComponent->EquipWeapon(OverlappingWeapon);
-		} else
-		{
-			ServerEquip();
-		}
-	}
-}
-
 void AOverfrontCharacter::CrouchInputStart(const FInputActionValue& Value)
 {
 	Crouch();
@@ -205,72 +160,6 @@ void AOverfrontCharacter::CrouchInputStart(const FInputActionValue& Value)
 void AOverfrontCharacter::CrouchInputStop(const FInputActionValue& Value)
 {
 	UnCrouch();
-}
-
-void AOverfrontCharacter::AimInputStart(const FInputActionValue& Value)
-{
-	if (CombatComponent)
-	{
-		CombatComponent->SetAiming(true);
-	}
-}
-
-void AOverfrontCharacter::AimInputEnd(const FInputActionValue& Value)
-{
-	if (CombatComponent)
-	{
-		CombatComponent->SetAiming(false);
-	}
-}
-
-void AOverfrontCharacter::FireInputStart(const FInputActionValue& Value)
-{
-	if (CombatComponent)
-	{
-		CombatComponent->FireInput(true);
-	}
-}
-
-void AOverfrontCharacter::FireInputEnd(const FInputActionValue& Value)
-{
-	if (CombatComponent)
-	{
-		CombatComponent->FireInput(false);
-	}
-}
-
-void AOverfrontCharacter::ServerEquip_Implementation()
-{
-	if (CombatComponent)
-	{
-		CombatComponent->EquipWeapon(OverlappingWeapon);
-	}
-}
-
-
-void AOverfrontCharacter::MulticastHit_Implementation()
-{
-	PlayHitReactMontage();
-}
-
-void AOverfrontCharacter::HideCharacterIfCameraClose()
-{
-	if (!IsLocallyControlled()) return;
-	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < PlayerHideThresold)
-	{
-		GetMesh()->SetVisibility(false);
-		if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
-		{
-			CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
-		}
-	} else
-	{
-		GetMesh()->SetVisibility(true);
-		if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
-		{
-			CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
-		}
-	}
 }
 
 void AOverfrontCharacter::DoMove(float Right, float Forward)
@@ -306,7 +195,96 @@ void AOverfrontCharacter::DoJumpEnd()
 {
 	StopJumping();
 }
-#pragma endregion CHARACTER_MOVEMENT
+
+void AOverfrontCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.f;
+}
+
+#pragma endregion CharacterMovement
+
+#pragma region Combat
+
+void AOverfrontCharacter::AimInputStart(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		CombatComponent->SetAiming(true);
+	}
+}
+
+void AOverfrontCharacter::AimInputEnd(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		CombatComponent->SetAiming(false);
+	}
+}
+
+void AOverfrontCharacter::FireInputStart(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		CombatComponent->FireInput(true);
+	}
+}
+
+void AOverfrontCharacter::FireInputEnd(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		CombatComponent->FireInput(false);
+	}
+}
+
+void AOverfrontCharacter::EquipInput(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		if (HasAuthority())
+		{
+			CombatComponent->EquipWeapon(OverlappingWeapon);
+		} else
+		{
+			ServerEquip();
+		}
+	}
+}
+
+void AOverfrontCharacter::ServerEquip_Implementation()
+{
+	if (CombatComponent)
+	{
+		CombatComponent->EquipWeapon(OverlappingWeapon);
+	}
+}
+
+void AOverfrontCharacter::MulticastHit_Implementation()
+{
+	PlayHitReactMontage();
+}
+
+void AOverfrontCharacter::HideCharacterIfCameraClose()
+{
+	if (!IsLocallyControlled()) return;
+	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < PlayerHideThresold)
+	{
+		GetMesh()->SetVisibility(false);
+		if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
+		{
+			CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+	} else
+	{
+		GetMesh()->SetVisibility(true);
+		if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
+		{
+			CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+}
 
 void AOverfrontCharacter::SetOverlappingWeapon(AOFWeapon* Weapon)
 {
@@ -439,6 +417,43 @@ void AOverfrontCharacter::OnRep_OverlappingWeapon(AOFWeapon* LastWeapon) const
 	}
 }
 
+void AOverfrontCharacter::PlayFireMontage(bool bAiming)
+{
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireWeaponMontage)
+	{
+		AnimInstance->Montage_Play(FireWeaponMontage);
+		FName SectionName;
+		SectionName = bAiming ? FName("RifleIronsights") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void AOverfrontCharacter::PlayHitReactMontage()
+{
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HitReactMontage)
+	{
+		AnimInstance->Montage_Play(HitReactMontage);
+		FName SectionName("FromFront");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+#pragma endregion Combat
+
+#pragma region PlayerStats
+
+void AOverfrontCharacter::OnRep_Health()
+{
+}
+
+#pragma endregion PlayerStats
+
+#pragma region Getters
 bool AOverfrontCharacter::IsWeaponEquipped()
 {
 	return (CombatComponent && CombatComponent->EquippedWeapon);
@@ -461,3 +476,5 @@ FVector AOverfrontCharacter::GetHitTarget() const
 
 	return CombatComponent->Target;
 }
+#pragma endregion Getters
+

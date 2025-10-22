@@ -135,6 +135,18 @@ private:
 	FRotator ProxyRotation;
 	float ProxyYaw;
 	float TimeSinceLastMovementReplication;
+
+	/**
+	* Player Health
+	**/
+	UPROPERTY(EditAnywhere, Category="Player Stats")
+	float MaxHealth = 100.f;
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Health, Category="Player Stats")
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
 public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
