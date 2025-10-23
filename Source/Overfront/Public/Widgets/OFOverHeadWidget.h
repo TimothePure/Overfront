@@ -16,9 +16,6 @@ class OVERFRONT_API UOFOverHeadWidget : public UUserWidget
 
 public:
 	void SetDisplayText(FString Text);
-
-	UFUNCTION(BlueprintCallable)
-	void ShowPlayerName(APawn* InPawn);
 	
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* DisplayText;

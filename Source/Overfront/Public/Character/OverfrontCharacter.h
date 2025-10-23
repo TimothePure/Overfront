@@ -64,27 +64,54 @@ public:
 	void PlayFireMontage(bool bAiming);
 
 	virtual void OnRep_ReplicatedMovement() override;
+
+	void OnEliminated();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnEliminated();
+
+	void UpdateHUDHealth();
+
 protected:
 	virtual void BeginPlay() override;
-	virtual void Jump() override;
 	
+	/** Jump **/
+	virtual void Jump() override; 
+	virtual void DoJumpStart();
+	virtual void DoJumpEnd();
+
+	/** Movement **/
 	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoMove(float Right, float Forward);
 	void MoveInput(const FInputActionValue& Value);
+
+	/** Look **/
 	void LookInput(const FInputActionValue& Value);
+	virtual void DoLook(float Yaw, float Pitch);
+
+	/** Equip **/
 	void EquipInput(const FInputActionValue& Value);
+
+	/** Crouch **/
 	void CrouchInputStart(const FInputActionValue& Value);
 	void CrouchInputStop(const FInputActionValue& Value);
+	
+	/** Aim **/
 	void AimInputStart(const FInputActionValue& Value);
 	void AimInputEnd(const FInputActionValue& Value);
+	void AimOffset(float DeltaTime);
+
+	/** Fire **/
 	void FireInputStart(const FInputActionValue& Value);
 	void FireInputEnd(const FInputActionValue& Value);
-	void AimOffset(float DeltaTime);
+	
 	void SimProxiesTurn();
 	void PlayHitReactMontage();
+
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
-	void UpdateHUDHealth();
 private:
+	/** Character Components **/
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	USpringArmComponent* SpringArm;
 
@@ -94,18 +121,22 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	class UWidgetComponent* OverheadWidget;
 
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
+	class UOFCombatComponent* CombatComponent;
+
+	class AOFPlayerController* OFPlayerController;
+	
+	/** Weapon Pickup **/
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
 	class AOFWeapon* OverlappingWeapon;
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AOFWeapon* LastWeapon) const;
-
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
-	class UOFCombatComponent* CombatComponent;
-
+	
 	UFUNCTION(Server, Reliable)
 	void ServerEquip();
 
+	/** Aiming properties **/
 	float AO_Yaw;
 	float InterpAO_Yaw;
 	float AO_Pitch;
@@ -114,17 +145,20 @@ private:
 	ETurningInPlace TurningInPlace;
 	void TurnInPlace(float DeltaTime);
 
+	/** Animation Montages **/
 	UPROPERTY(EditAnywhere, Category = "Combat")
-	class UAnimMontage* FireWeaponMontage;
+	UAnimMontage* FireWeaponMontage;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimMontage* HitReactMontage;
 
+	/** Hiding Character from Camera **/
 	void HideCharacterIfCameraClose();
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float PlayerHideThresold = 200.f;
 
+	/** Rotation Movement Replication **/
 	bool bRotateRootBone;
 	float TurnThresold = 0.5f;
 	FRotator ProxyRotationLastFrame;
@@ -135,9 +169,7 @@ private:
 	void CalculateAO_Pitch();
 	float CalculateSpeed();
 	
-	/**
-	* Player Health
-	**/
+	/** Player Health **/
 	UPROPERTY(EditAnywhere, Category="Player Stats")
 	float MaxHealth = 100.f;
 
@@ -147,23 +179,17 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
-	class AOFPlayerController* OFPlayerController;
+	/** Elimination **/
+	void EnterRagdollState();
+	bool bIsEliminated = false;
+	FTimerHandle EliminationTimerHandle;
+	void EliminationTimerFinished();
+	
+	UPROPERTY(EditDefaultsOnly)
+	float EliminationDelay = 3.f;
+
 public:
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoMove(float Right, float Forward);
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoLook(float Yaw, float Pitch);
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpStart();
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpEnd();
-
-	
-	
-
+	/** Getters and Setters **/
 	void SetOverlappingWeapon(AOFWeapon* Weapon);
 	bool IsWeaponEquipped();
 	bool IsAiming();
@@ -175,4 +201,5 @@ public:
 	FORCEINLINE USpringArmComponent* GetSpringArm() const { return SpringArm; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
+	FORCEINLINE bool IsEliminated() const { return bIsEliminated; }
 };

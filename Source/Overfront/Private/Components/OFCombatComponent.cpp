@@ -124,7 +124,6 @@ void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
 	{
 		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
 	}
-
 	EquippedWeapon->SetOwner(Character);
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
@@ -134,6 +133,11 @@ void UOFCombatComponent::OnRep_EquippedWeapon()
 {
 	if (EquippedWeapon && Character)
 	{
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
+		{
+			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+		}
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 	}

@@ -12,6 +12,7 @@
 #include "Components/OFCombatComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameModes/OverfrontGameMode.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Overfront/Overfront.h"
@@ -20,10 +21,12 @@
 
 #pragma region ClassSetup
 
+class AOverfrontGameMode;
+
 AOverfrontCharacter::AOverfrontCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
 	SpringArm->SetupAttachment(GetMesh());
 	SpringArm->TargetArmLength = 600.f;
@@ -168,6 +171,25 @@ void AOverfrontCharacter::CrouchInputStart(const FInputActionValue& Value)
 void AOverfrontCharacter::CrouchInputStop(const FInputActionValue& Value)
 {
 	UnCrouch();
+}
+
+void AOverfrontCharacter::EnterRagdollState()
+{
+	FVector CurrentVelocity = GetCharacterMovement()->Velocity;
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (OFPlayerController)
+	{
+		DisableInput(OFPlayerController);
+	}
+	
+	// Disable collision and set ragdoll state
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->WakeAllRigidBodies();
+	GetMesh()->SetAllPhysicsLinearVelocity(CurrentVelocity);
+	GetMesh()->AddImpulseToAllBodiesBelow(FVector(0.f, 0.f, 50.f), TEXT("pelvis"), true);
 }
 
 void AOverfrontCharacter::DoMove(float Right, float Forward)
@@ -456,8 +478,40 @@ void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, cons
 		UpdateHUDHealth();
 	}
 	PlayHitReactMontage();
+
+	if (Health <= 0.f)
+	{
+		if (AOverfrontGameMode* OverfrontGameMode = GetWorld()->GetAuthGameMode<AOverfrontGameMode>())
+		{
+			OFPlayerController = OFPlayerController == nullptr ? Cast<AOFPlayerController>(Controller) : OFPlayerController;
+			OverfrontGameMode->PlayerEliminated(this, OFPlayerController, Cast<AOFPlayerController>(InstigatorController));
+		}
+	}
 }
 
+// Called by the GameMode so only on the server
+void AOverfrontCharacter::OnEliminated()
+{
+	if (CombatComponent && CombatComponent->EquippedWeapon)
+	{
+		CombatComponent->EquippedWeapon->Dropped();
+	}
+	MulticastOnEliminated();
+	GetWorldTimerManager().SetTimer(EliminationTimerHandle, this, &ThisClass::EliminationTimerFinished, EliminationDelay);
+}
+
+void AOverfrontCharacter::MulticastOnEliminated_Implementation()
+{
+	EnterRagdollState();
+}
+
+void AOverfrontCharacter::EliminationTimerFinished()
+{
+	if (AOverfrontGameMode* OverfrontGameMode = GetWorld()->GetAuthGameMode<AOverfrontGameMode>())
+	{
+		OverfrontGameMode->RequestRespawn(this, Controller);
+	}
+}
 
 #pragma endregion Combat
 

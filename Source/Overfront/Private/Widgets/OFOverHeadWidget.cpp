@@ -14,15 +14,6 @@ void UOFOverHeadWidget::SetDisplayText(FString Text)
 	}
 }
 
-void UOFOverHeadWidget::ShowPlayerName(APawn* InPawn)
-{
-	if (InPawn && InPawn->GetPlayerState())
-	{
-		FString LocalRoleString = InPawn->GetPlayerState()->GetName();
-		SetDisplayText(LocalRoleString);
-	}
-}
-
 void UOFOverHeadWidget::NativeDestruct()
 {
 	RemoveFromParent();

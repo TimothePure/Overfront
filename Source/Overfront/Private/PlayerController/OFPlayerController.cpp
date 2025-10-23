@@ -2,6 +2,8 @@
 
 
 #include "PlayerController/OFPlayerController.h"
+
+#include "Character/OverfrontCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Widgets/OFCharacterOverlay.h"
@@ -12,6 +14,17 @@ void AOFPlayerController::BeginPlay()
     Super::BeginPlay();
     
     HUD = Cast<AOFHUD>(GetHUD());
+}
+
+void AOFPlayerController::OnPossess(APawn* InPawn)
+{
+    Super::OnPossess(InPawn);
+
+    AOverfrontCharacter* OverfrontCharacter = Cast<AOverfrontCharacter>(InPawn);
+    if (OverfrontCharacter)
+    {
+        OverfrontCharacter->UpdateHUDHealth();
+    }
 }
 
 void AOFPlayerController::SetHUDHealth(float Health, float MaxHealth)
