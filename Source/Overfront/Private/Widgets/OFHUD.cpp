@@ -3,6 +3,26 @@
 
 #include "Widgets/OFHUD.h"
 
+#include "Blueprint/UserWidget.h"
+#include "Widgets/OFCharacterOverlay.h"
+
+
+void AOFHUD::BeginPlay()
+{
+	Super::BeginPlay();
+	AddCharacterOverlay();
+}
+
+void AOFHUD::AddCharacterOverlay()
+{
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if (PlayerController && CharacterOverlayClass)
+	{
+		CharacterOverlay = CreateWidget<UOFCharacterOverlay>(PlayerController, CharacterOverlayClass);
+		CharacterOverlay->AddToViewport();
+	}
+}
+
 void AOFHUD::DrawHUD()
 {
 	Super::DrawHUD();

@@ -15,6 +15,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Overfront/Overfront.h"
+#include "PlayerController/OFPlayerController.h"
 #include "Weapons/OFWeapon.h"
 
 #pragma region ClassSetup
@@ -58,6 +59,7 @@ void AOverfrontCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AOverfrontCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(AOverfrontCharacter, Health);
 }
 
 void AOverfrontCharacter::PostInitializeComponents()
@@ -75,9 +77,7 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AOverfrontCharacter::DoJumpStart);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::DoJumpEnd);
-
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::MoveInput);
-
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::LookInput);
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::EquipInput);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AOverfrontCharacter::CrouchInputStart);
@@ -92,10 +92,11 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 void AOverfrontCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	
+	OFPlayerController = Cast<AOFPlayerController>(GetController());
+	if (OFPlayerController)
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(OFPlayerController->GetLocalPlayer()))
 		{
 			if (DefaultMappingContext)
 			{
@@ -106,6 +107,13 @@ void AOverfrontCharacter::BeginPlay()
 				Subsystem->AddMappingContext(CombatMappingContext, 0);
 			}
 		}
+	}
+	
+	UpdateHUDHealth();
+	
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &AOverfrontCharacter::ReceiveDamage);
 	}
 }
 
@@ -259,11 +267,6 @@ void AOverfrontCharacter::ServerEquip_Implementation()
 	{
 		CombatComponent->EquipWeapon(OverlappingWeapon);
 	}
-}
-
-void AOverfrontCharacter::MulticastHit_Implementation()
-{
-	PlayHitReactMontage();
 }
 
 void AOverfrontCharacter::HideCharacterIfCameraClose()
@@ -443,12 +446,39 @@ void AOverfrontCharacter::PlayHitReactMontage()
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
+
+void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
+	class AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	if (IsLocallyControlled())
+	{
+		UpdateHUDHealth();
+	}
+	PlayHitReactMontage();
+}
+
+
 #pragma endregion Combat
 
 #pragma region PlayerStats
 
 void AOverfrontCharacter::OnRep_Health()
 {
+	if (IsLocallyControlled())
+	{
+		UpdateHUDHealth();
+	}
+	PlayHitReactMontage();
+}
+
+void AOverfrontCharacter::UpdateHUDHealth()
+{
+	OFPlayerController = OFPlayerController == nullptr ? Cast<AOFPlayerController>(GetController()) : OFPlayerController;
+	if (OFPlayerController)
+	{
+		OFPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
 }
 
 #pragma endregion PlayerStats

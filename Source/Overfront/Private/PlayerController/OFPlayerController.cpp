@@ -2,3 +2,27 @@
 
 
 #include "PlayerController/OFPlayerController.h"
+#include "Components/ProgressBar.h"
+#include "Components/TextBlock.h"
+#include "Widgets/OFCharacterOverlay.h"
+#include "Widgets/OFHUD.h"
+
+void AOFPlayerController::BeginPlay()
+{
+    Super::BeginPlay();
+    
+    HUD = Cast<AOFHUD>(GetHUD());
+}
+
+void AOFPlayerController::SetHUDHealth(float Health, float MaxHealth)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->HealthBar && HUD->CharacterOverlay->HealthText)
+    {
+        const float HealthPercent = Health / MaxHealth;
+        HUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
+        FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
+        HUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
+    }
+}

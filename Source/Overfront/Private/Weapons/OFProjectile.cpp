@@ -46,13 +46,6 @@ void AOFProjectile::BeginPlay()
 void AOFProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& HitResult)
 {
-
-	AOverfrontCharacter* Character = Cast<AOverfrontCharacter>(OtherActor);
-	if (Character)
-	{
-		Character->MulticastHit();
-	}
-	
 	Destroy();
 }
 

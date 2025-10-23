@@ -19,35 +19,6 @@ class OVERFRONT_API AOverfrontCharacter : public ACharacter, public IOFInteractW
 {
 	GENERATED_BODY()
 
-public:
-	AOverfrontCharacter();
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void PostInitializeComponents() override;
-	void PlayFireMontage(bool bAiming);
-
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
-
-	virtual void OnRep_ReplicatedMovement() override;
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	virtual void Jump() override;
-	
-	UFUNCTION(BlueprintCallable, Category="Input")
-	void MoveInput(const FInputActionValue& Value);
-	void LookInput(const FInputActionValue& Value);
-
-	void EquipInput(const FInputActionValue& Value);
-	void CrouchInputStart(const FInputActionValue& Value);
-	void CrouchInputStop(const FInputActionValue& Value);
-	void AimInputStart(const FInputActionValue& Value);
-	void AimInputEnd(const FInputActionValue& Value);
-	void FireInputStart(const FInputActionValue& Value);
-	void FireInputEnd(const FInputActionValue& Value);
-
 	/** Default Input Mapping Context **/
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputMappingContext* DefaultMappingContext;
@@ -84,10 +55,35 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* FireWeaponAction;
 	
+public:
+	AOverfrontCharacter();
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void PostInitializeComponents() override;
+	void PlayFireMontage(bool bAiming);
+
+	virtual void OnRep_ReplicatedMovement() override;
+protected:
+	virtual void BeginPlay() override;
+	virtual void Jump() override;
+	
+	UFUNCTION(BlueprintCallable, Category="Input")
+	void MoveInput(const FInputActionValue& Value);
+	void LookInput(const FInputActionValue& Value);
+	void EquipInput(const FInputActionValue& Value);
+	void CrouchInputStart(const FInputActionValue& Value);
+	void CrouchInputStop(const FInputActionValue& Value);
+	void AimInputStart(const FInputActionValue& Value);
+	void AimInputEnd(const FInputActionValue& Value);
+	void FireInputStart(const FInputActionValue& Value);
+	void FireInputEnd(const FInputActionValue& Value);
 	void AimOffset(float DeltaTime);
 	void SimProxiesTurn();
 	void PlayHitReactMontage();
-	
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+	void UpdateHUDHealth();
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	USpringArmComponent* SpringArm;
@@ -136,6 +132,9 @@ private:
 	float ProxyYaw;
 	float TimeSinceLastMovementReplication;
 
+	void CalculateAO_Pitch();
+	float CalculateSpeed();
+	
 	/**
 	* Player Health
 	**/
@@ -147,6 +146,8 @@ private:
 
 	UFUNCTION()
 	void OnRep_Health();
+
+	class AOFPlayerController* OFPlayerController;
 public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
@@ -160,12 +161,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 
+	
+	
+
 	void SetOverlappingWeapon(AOFWeapon* Weapon);
-	void CalculateAO_Pitch();
-	float CalculateSpeed();
 	bool IsWeaponEquipped();
 	bool IsAiming();
-
 	FORCEINLINE float GetAOYaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAOPitch() const { return AO_Pitch; }
 	AOFWeapon* GetEquippedWeapon();
