@@ -6,6 +6,8 @@
 #include "Character/OverfrontCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/PlayerState.h"
+#include "PlayerState/OFPlayerState.h"
 #include "Widgets/OFCharacterOverlay.h"
 #include "Widgets/OFHUD.h"
 
@@ -23,7 +25,18 @@ void AOFPlayerController::OnPossess(APawn* InPawn)
     AOverfrontCharacter* OverfrontCharacter = Cast<AOverfrontCharacter>(InPawn);
     if (OverfrontCharacter)
     {
-        OverfrontCharacter->UpdateHUDHealth();
+        SetHUDHealth(OverfrontCharacter->GetHealth(), OverfrontCharacter->GetMaxHealth()); 
+    }
+}
+
+void AOFPlayerController::OnRep_PlayerState()
+{
+    Super::OnRep_PlayerState();
+    
+    // Called inside BeginPlay and Controller->OnRep_PlayerState to ensure that the HUD is setup correctly
+    if (AOFPlayerState* PS = GetPlayerState<AOFPlayerState>())
+    {
+        PS->AddToScore(0.f);
     }
 }
 
@@ -37,5 +50,16 @@ void AOFPlayerController::SetHUDHealth(float Health, float MaxHealth)
         HUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
         FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
         HUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
+    }
+}
+
+void AOFPlayerController::SetHUDScore(float Score)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->ScoreAmount)
+    {
+        FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
+        HUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
     }
 }

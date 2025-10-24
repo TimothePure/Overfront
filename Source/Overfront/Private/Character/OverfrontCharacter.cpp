@@ -17,6 +17,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Overfront/Overfront.h"
 #include "PlayerController/OFPlayerController.h"
+#include "PlayerState/OFPlayerState.h"
 #include "Weapons/OFWeapon.h"
 
 #pragma region ClassSetup
@@ -110,6 +111,12 @@ void AOverfrontCharacter::BeginPlay()
 				Subsystem->AddMappingContext(CombatMappingContext, 0);
 			}
 		}
+	}
+
+	// Called inside BeginPlay and Controller->OnRep_PlayerState to ensure that the HUD is setup correctly
+	if (AOFPlayerState* PS = GetPlayerState<AOFPlayerState>())
+	{
+		PS->AddToScore(0.f);
 	}
 	
 	UpdateHUDHealth();

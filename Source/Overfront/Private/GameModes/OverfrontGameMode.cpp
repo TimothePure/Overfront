@@ -5,9 +5,19 @@
 #include "Character/OverfrontCharacter.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "PlayerController/OFPlayerController.h"
+#include "PlayerState/OFPlayerState.h"
 
 void AOverfrontGameMode::PlayerEliminated(AOverfrontCharacter* EliminatedCharacter, AOFPlayerController* VictimController, AOFPlayerController* AttackerController)
 {
+	AOFPlayerState* AttackerPlayerState = AttackerController ? Cast<AOFPlayerState>(AttackerController->PlayerState) : nullptr;
+	AOFPlayerState* VictimPlayerState = VictimController ? Cast<AOFPlayerState>(VictimController->PlayerState) : nullptr;
+
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
+	{
+		AttackerPlayerState->AddToScore(1.f);
+	}
+	
 	if (EliminatedCharacter)
 	{
 		EliminatedCharacter->OnEliminated();
