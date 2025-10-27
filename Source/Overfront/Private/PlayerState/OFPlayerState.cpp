@@ -2,9 +2,30 @@
 
 
 #include "PlayerState/OFPlayerState.h"
-
 #include "Character/OverfrontCharacter.h"
+#include "Net/UnrealNetwork.h"
 #include "PlayerController/OFPlayerController.h"
+
+void AOFPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AOFPlayerState, Defeats);
+}
+
+void AOFPlayerState::AddToScore(float ScoreAmount)
+{
+	SetScore(GetScore() + ScoreAmount);
+
+	Character = Character == nullptr ? Cast<AOverfrontCharacter>(GetPawn()) : Character;
+	if (Character)
+	{
+		PlayerController = PlayerController == nullptr ? Cast<AOFPlayerController>(Character->Controller) : PlayerController;
+		if (PlayerController)
+		{
+			PlayerController->SetHUDScore(GetScore());
+		}
+	}
+}
 
 void AOFPlayerState::OnRep_Score()
 {
@@ -21,9 +42,9 @@ void AOFPlayerState::OnRep_Score()
 	}
 }
 
-void AOFPlayerState::AddToScore(float ScoreAmount)
+void AOFPlayerState::AddToDefeats(int32 DefeatsAmount)
 {
-	SetScore(GetScore() + ScoreAmount);
+	Defeats += DefeatsAmount;
 
 	Character = Character == nullptr ? Cast<AOverfrontCharacter>(GetPawn()) : Character;
 	if (Character)
@@ -31,7 +52,20 @@ void AOFPlayerState::AddToScore(float ScoreAmount)
 		PlayerController = PlayerController == nullptr ? Cast<AOFPlayerController>(Character->Controller) : PlayerController;
 		if (PlayerController)
 		{
-			PlayerController->SetHUDScore(GetScore());
+			PlayerController->SetHUDDefeats(Defeats);
+		}
+	}
+}
+
+void AOFPlayerState::OnRep_Defeats()
+{
+	Character = Character == nullptr ? Cast<AOverfrontCharacter>(GetPawn()) : Character;
+	if (Character)
+	{
+		PlayerController = PlayerController == nullptr ? Cast<AOFPlayerController>(Character->Controller) : PlayerController;
+		if (PlayerController)
+		{
+			PlayerController->SetHUDDefeats(Defeats);
 		}
 	}
 }

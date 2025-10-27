@@ -15,10 +15,21 @@ class OVERFRONT_API AOFPlayerState : public APlayerState
 	GENERATED_BODY()
 
 public:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** Replication Notifies **/
 	virtual void OnRep_Score() override;
-	void AddToScore(float ScoreAmount);
-private:
-	class AOverfrontCharacter* Character;
-	class AOFPlayerController* PlayerController;
+	UFUNCTION()
+	virtual void OnRep_Defeats();
 	
+	void AddToScore(float ScoreAmount);
+	void AddToDefeats(int32 DefeatsAmount);
+private:
+	UPROPERTY()
+	class AOverfrontCharacter* Character;
+	UPROPERTY()
+	class AOFPlayerController* PlayerController;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Defeats)
+	int32 Defeats = 0;
 };

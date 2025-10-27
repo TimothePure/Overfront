@@ -19,4 +19,8 @@ public:
 
 protected:
 	AActor* GetFurthestPlayerStart(AController* EliminatedController) const;
+
+private:
+	UPROPERTY(EditAnywhere)
+	float RespawnDelay = 5.f;
 };

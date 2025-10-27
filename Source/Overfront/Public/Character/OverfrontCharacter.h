@@ -65,7 +65,7 @@ public:
 
 	virtual void OnRep_ReplicatedMovement() override;
 
-	void OnEliminated();
+	void OnEliminated(float Delay);
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastOnEliminated();
@@ -124,6 +124,7 @@ private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
 	class UOFCombatComponent* CombatComponent;
 
+	UPROPERTY()
 	class AOFPlayerController* OFPlayerController;
 	
 	/** Weapon Pickup **/
@@ -184,9 +185,9 @@ private:
 	bool bIsEliminated = false;
 	FTimerHandle EliminationTimerHandle;
 	void EliminationTimerFinished();
-	
-	UPROPERTY(EditDefaultsOnly)
-	float EliminationDelay = 3.f;
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
+	UMaterialInstance* GrayscaleMaterialInstance;
 
 public:
 	/** Getters and Setters **/

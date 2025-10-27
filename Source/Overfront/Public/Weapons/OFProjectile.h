@@ -32,13 +32,14 @@ private:
 	class UProjectileMovementComponent* ProjectileMovementComponent;
 
 	UPROPERTY(EditAnywhere)
-	class UParticleSystem* Tracer;
+	 UParticleSystem* Tracer;
 
-	class UParticleSystemComponent* TracerComponent;
+	UPROPERTY()
+	UParticleSystemComponent* TracerComponent;
 
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;
 
 	UPROPERTY(EditAnywhere)
-	class USoundCue* ImpactSound;
+	USoundCue* ImpactSound;
 };

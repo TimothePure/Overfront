@@ -37,15 +37,17 @@ void AOFPlayerController::OnRep_PlayerState()
     if (AOFPlayerState* PS = GetPlayerState<AOFPlayerState>())
     {
         PS->AddToScore(0.f);
+        PS->AddToDefeats(0);
     }
 }
 
 void AOFPlayerController::SetHUDHealth(float Health, float MaxHealth)
 {
     HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
-    
+
     if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->HealthBar && HUD->CharacterOverlay->HealthText)
     {
+        HUD->CharacterOverlay->SetHealth(Health, MaxHealth);
         const float HealthPercent = Health / MaxHealth;
         HUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
         FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
@@ -61,5 +63,16 @@ void AOFPlayerController::SetHUDScore(float Score)
     {
         FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
         HUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
+    }
+}
+
+void AOFPlayerController::SetHUDDefeats(int32 Defeats)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->DefeatsAmount)
+    {
+        FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
+        HUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
     }
 }

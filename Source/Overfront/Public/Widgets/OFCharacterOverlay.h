@@ -23,4 +23,19 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ScoreAmount;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* DefeatsAmount;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* BloodOverlayImage;
+	
+	void SetHealth(float NewHealth, float NewMaxHealth);
+	
+private:
+	float Health;
+	float MaxHealth;
+	
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
+	float MaxBloodOpacity = 0.3f;
 };

@@ -17,10 +17,15 @@ void AOverfrontGameMode::PlayerEliminated(AOverfrontCharacter* EliminatedCharact
 	{
 		AttackerPlayerState->AddToScore(1.f);
 	}
-	
-	if (EliminatedCharacter)
+
+	if (VictimPlayerState)
 	{
-		EliminatedCharacter->OnEliminated();
+		VictimPlayerState->AddToDefeats(1);
+	}
+	
+	if (EliminatedCharacter) 
+	{
+		EliminatedCharacter->OnEliminated(RespawnDelay);
 	}
 }
 

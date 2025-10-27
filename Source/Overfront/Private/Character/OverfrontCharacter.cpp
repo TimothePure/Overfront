@@ -117,6 +117,7 @@ void AOverfrontCharacter::BeginPlay()
 	if (AOFPlayerState* PS = GetPlayerState<AOFPlayerState>())
 	{
 		PS->AddToScore(0.f);
+		PS->AddToDefeats(0);
 	}
 	
 	UpdateHUDHealth();
@@ -497,19 +498,23 @@ void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, cons
 }
 
 // Called by the GameMode so only on the server
-void AOverfrontCharacter::OnEliminated()
+void AOverfrontCharacter::OnEliminated(float Delay)
 {
 	if (CombatComponent && CombatComponent->EquippedWeapon)
 	{
 		CombatComponent->EquippedWeapon->Dropped();
 	}
 	MulticastOnEliminated();
-	GetWorldTimerManager().SetTimer(EliminationTimerHandle, this, &ThisClass::EliminationTimerFinished, EliminationDelay);
+	GetWorldTimerManager().SetTimer(EliminationTimerHandle, this, &ThisClass::EliminationTimerFinished, Delay);
 }
 
 void AOverfrontCharacter::MulticastOnEliminated_Implementation()
 {
 	EnterRagdollState();
+	if (IsLocallyControlled())
+	{
+		FollowCamera->PostProcessSettings.AddBlendable(GrayscaleMaterialInstance, 1.0f);
+	}
 }
 
 void AOverfrontCharacter::EliminationTimerFinished()
