@@ -3,12 +3,11 @@
 
 #include "Weapons/OFProjectile.h"
 
-#include "Character/OverfrontCharacter.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Overfront/Overfront.h"
-#include "Sound/SoundCue.h"
+#include "Sound/SoundBase.h"
 
 AOFProjectile::AOFProjectile()
 {
