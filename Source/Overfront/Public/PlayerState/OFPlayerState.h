@@ -24,6 +24,7 @@ public:
 	
 	void AddToScore(float ScoreAmount);
 	void AddToDefeats(int32 DefeatsAmount);
+	void OnEliminated(float RespawnDelay, FString KillerName);
 private:
 	UPROPERTY()
 	class AOverfrontCharacter* Character;

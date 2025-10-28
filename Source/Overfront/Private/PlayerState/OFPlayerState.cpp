@@ -57,6 +57,19 @@ void AOFPlayerState::AddToDefeats(int32 DefeatsAmount)
 	}
 }
 
+void AOFPlayerState::OnEliminated(float RespawnDelay, FString KillerName)
+{
+	Character = Character == nullptr ? Cast<AOverfrontCharacter>(GetPawn()) : Character;
+	if (Character)
+	{
+		PlayerController = PlayerController == nullptr ? Cast<AOFPlayerController>(Character->Controller) : PlayerController;
+		if (PlayerController)
+		{
+			PlayerController->Client_OnEliminated(RespawnDelay, KillerName);
+		}
+	}
+}
+
 void AOFPlayerState::OnRep_Defeats()
 {
 	Character = Character == nullptr ? Cast<AOverfrontCharacter>(GetPawn()) : Character;

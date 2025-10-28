@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerState.h"
 #include "PlayerState/OFPlayerState.h"
 #include "Widgets/OFCharacterOverlay.h"
+#include "Widgets/OFDeathWidget.h"
 #include "Widgets/OFHUD.h"
 
 void AOFPlayerController::BeginPlay()
@@ -75,4 +76,23 @@ void AOFPlayerController::SetHUDDefeats(int32 Defeats)
         FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
         HUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
     }
+}
+
+void AOFPlayerController::OnEliminated(float RespawnDelay, FString KillerName)
+{
+    if (DeathWidgetClass && IsLocalController())
+    {
+        UOFDeathWidget* DeathWidget = CreateWidget<UOFDeathWidget>(this, DeathWidgetClass);
+        if (DeathWidget)
+        {
+            DeathWidget->AddToViewport();
+            DeathWidget->SetKillerNameText(KillerName);
+            DeathWidget->StartRespawnTimer(RespawnDelay);
+        }
+    }
+}
+
+void AOFPlayerController::Client_OnEliminated_Implementation(float RespawnDelay, const FString& KillerName)
+{
+    OnEliminated(RespawnDelay, KillerName);
 }

@@ -21,6 +21,10 @@ void AOverfrontGameMode::PlayerEliminated(AOverfrontCharacter* EliminatedCharact
 	if (VictimPlayerState)
 	{
 		VictimPlayerState->AddToDefeats(1);
+		if (AttackerPlayerState)
+		{
+			VictimPlayerState->OnEliminated(RespawnDelay, AttackerPlayerState->GetPlayerName());
+		}
 	}
 	
 	if (EliminatedCharacter) 

@@ -17,12 +17,17 @@ public:
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
-	
+	void OnEliminated(float RespawnDelay, FString KillerName);
+	UFUNCTION(Client, Reliable)
+	void Client_OnEliminated(float RespawnDelay, const FString& KillerName);
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnRep_PlayerState() override;
 	
 private:
-	class AOFHUD* HUD;
+	class AOFHUD* HUD; 
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
+	TSubclassOf<class UOFDeathWidget> DeathWidgetClass;
 };
