@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/OFInteractWithCrosshairInterface.h"
+#include "Overfront/Enums/OFCombatStates.h"
 #include "Overfront/Enums/OFTurningInPlace.h"
 #include "OverfrontCharacter.generated.h"
 
@@ -54,6 +55,10 @@ class OVERFRONT_API AOverfrontCharacter : public ACharacter, public IOFInteractW
 	/** Fire Weapon Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* FireWeaponAction;
+
+	/** Reload Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* ReloadAction;
 	
 public:
 	AOverfrontCharacter();
@@ -62,6 +67,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
+	void PlayReloadMontage();
 
 	virtual void OnRep_ReplicatedMovement() override;
 
@@ -104,6 +110,9 @@ protected:
 	/** Fire **/
 	void FireInputStart(const FInputActionValue& Value);
 	void FireInputEnd(const FInputActionValue& Value);
+
+	/** Reload **/
+	void ReloadInput(const FInputActionValue& Value);
 	
 	void SimProxiesTurn();
 	void PlayHitReactMontage();
@@ -121,7 +130,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	class UWidgetComponent* OverheadWidget;
 
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	class UOFCombatComponent* CombatComponent;
 
 	UPROPERTY()
@@ -152,6 +161,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimMontage* HitReactMontage;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	UAnimMontage* ReloadMontage;
 
 	/** Hiding Character from Camera **/
 	void HideCharacterIfCameraClose();
@@ -189,6 +201,8 @@ private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
 	UMaterialInstance* GrayscaleMaterialInstance;
 
+	/** Carrying Ammo **/
+
 public:
 	/** Getters and Setters **/
 	void SetOverlappingWeapon(AOFWeapon* Weapon);
@@ -205,4 +219,5 @@ public:
 	FORCEINLINE bool IsEliminated() const { return bIsEliminated; }
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	ECombatState GetCombatState() const;
 };

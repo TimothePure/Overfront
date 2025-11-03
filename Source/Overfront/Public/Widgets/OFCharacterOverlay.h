@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/HorizontalBox.h"
 #include "OFCharacterOverlay.generated.h"
 
 /**
@@ -31,6 +32,17 @@ public:
 	class UImage* BloodOverlayImage;
 	
 	void SetHealth(float NewHealth, float NewMaxHealth);
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* WeaponAmmoAmount;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* CarriedAmmoAmount;
+
+	UPROPERTY(meta = (BindWidget))
+	UHorizontalBox* AmmoBox;
+
+	void SetAmmoHUDVisibility(bool bVisible);
 	
 private:
 	float Health;

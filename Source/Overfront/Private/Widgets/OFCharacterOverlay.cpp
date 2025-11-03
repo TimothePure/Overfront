@@ -23,3 +23,8 @@ void UOFCharacterOverlay::SetHealth(float NewHealth, float NewMaxHealth)
 	// Blood Overlay
 	BloodOverlayImage->SetOpacity(MaxBloodOpacity * (1 - HealthPercent));
 }
+
+void UOFCharacterOverlay::SetAmmoHUDVisibility(bool bVisible)
+{
+	bVisible ? AmmoBox->SetVisibility(ESlateVisibility::Visible) : AmmoBox->SetVisibility(ESlateVisibility::Hidden);
+}

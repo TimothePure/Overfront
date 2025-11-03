@@ -27,6 +27,8 @@ void UOFCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UOFCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UOFCombatComponent, bAiming);
+	DOREPLIFETIME_CONDITION(UOFCombatComponent, CarriedAmmo, COND_OwnerOnly);
+	DOREPLIFETIME(UOFCombatComponent, CombatState);
 }
 
 void UOFCombatComponent::BeginPlay()
@@ -39,6 +41,10 @@ void UOFCombatComponent::BeginPlay()
 		{
 			DefaultFOV = Camera->FieldOfView;
 			CurrentFOV = DefaultFOV;
+		}
+		if (Character->HasAuthority())
+		{
+			InitializeCarriedAmmo();
 		}
 	}
 }
@@ -72,7 +78,7 @@ void UOFCombatComponent::FireInput(bool bPressed)
 
 void UOFCombatComponent::Fire()
 {
-	if (bCanFire && EquippedWeapon)
+	if (CanFire())
 	{
 		bCanFire = false;
 		ServerFire(Target);
@@ -110,6 +116,12 @@ void UOFCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize&
 	EquippedWeapon->Fire(TraceHitTarget);
 }
 
+bool UOFCombatComponent::CanFire()
+{
+	if (EquippedWeapon == nullptr) return false;
+	return !EquippedWeapon->IsEmpty() || !bCanFire;
+}
+
 #pragma endregion FiringWeapon
 
 #pragma region EquippingWeapon
@@ -118,6 +130,11 @@ void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
 
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Dropped();
+	}
+	
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
@@ -125,8 +142,49 @@ void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
 		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
 	}
 	EquippedWeapon->SetOwner(Character);
+	EquippedWeapon->SetHUDAmmo();
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	Controller = Controller == nullptr ? Cast<AOFPlayerController>(Character->GetController()) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
+}
+
+void UOFCombatComponent::Reload()
+{
+	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
+	{
+		ServerReload();
+	}
+}
+
+void UOFCombatComponent::ServerReload_Implementation()
+{
+	CombatState = ECombatState::ECS_Reloading;
+	HandleReload();
+}
+
+void UOFCombatComponent::HandleReload()
+{
+	if (Character == nullptr) return;
+	Character->PlayReloadMontage();
+}
+
+void UOFCombatComponent::FinishReloading()
+{
+	if (Character == nullptr) return;
+	if (Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
 }
 
 void UOFCombatComponent::OnRep_EquippedWeapon()
@@ -283,3 +341,31 @@ void UOFCombatComponent::InterpFOV(float DeltaTime)
 }
 
 #pragma endregion Aiming
+
+#pragma region Ammo
+
+void UOFCombatComponent::OnRep_CarriedAmmo()
+{
+	Controller = Controller == nullptr ? Cast<AOFPlayerController>(Character->GetController()) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UOFCombatComponent::InitializeCarriedAmmo()
+{
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
+}
+
+#pragma endregion Ammo
+
+void UOFCombatComponent::OnRep_CombatState()
+{
+	switch (CombatState)
+	{
+		case ECombatState::ECS_Reloading:
+		HandleReload();
+			break;
+	}
+}

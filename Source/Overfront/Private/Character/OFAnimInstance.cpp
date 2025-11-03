@@ -73,4 +73,6 @@ void UOFAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaSeconds, 20.f);
 		} 
 	}
+
+	bUseFABRIK = Character->GetCombatState() != ECombatState::ECS_Reloading;
 }

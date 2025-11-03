@@ -78,6 +78,28 @@ void AOFPlayerController::SetHUDDefeats(int32 Defeats)
     }
 }
 
+void AOFPlayerController::SetHUDWeaponAmmo(int32 Ammo)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->WeaponAmmoAmount)
+    {
+        FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
+        HUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
+    }
+}
+
+void AOFPlayerController::SetHUDCarriedAmmo(int32 Ammo)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->CarriedAmmoAmount)
+    {
+        FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
+        HUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+    }
+}
+
 void AOFPlayerController::OnEliminated(float RespawnDelay, FString KillerName)
 {
     if (DeathWidgetClass && IsLocalController())

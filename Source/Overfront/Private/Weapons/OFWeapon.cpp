@@ -8,6 +8,7 @@
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Net/UnrealNetwork.h"
+#include "PlayerController/OFPlayerController.h"
 #include "Weapons/OFBulletShell.h"
 #include "Weapons/OFProjectile.h"
 
@@ -37,6 +38,33 @@ void AOFWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AOFWeapon, WeaponState);
+	DOREPLIFETIME(AOFWeapon, Ammo);
+}
+
+void AOFWeapon::SetHUDAmmo()
+{
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(GetOwner()) : OwnerCharacter;
+	if (OwnerCharacter)
+	{
+		OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(OwnerCharacter->GetController()) : OwnerPlayerController;
+		if (OwnerPlayerController)
+		{
+			OwnerPlayerController->SetHUDWeaponAmmo(Ammo);
+		}
+	}
+}
+
+void AOFWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	if (Owner == nullptr)
+	{
+		OwnerCharacter = nullptr;
+		OwnerPlayerController = nullptr;
+	} else
+	{
+		SetHUDAmmo();
+	}
 }
 
 void AOFWeapon::ShowPickupWidget(bool bShowWidget)
@@ -67,6 +95,8 @@ void AOFWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
+	
+	SpendAmmo();
 }
 
 void AOFWeapon::Dropped()
@@ -75,6 +105,8 @@ void AOFWeapon::Dropped()
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
 	WeaponMesh->DetachFromComponent(DetachRules);
 	SetOwner(nullptr);
+	OwnerCharacter = nullptr;
+	OwnerPlayerController = nullptr;
 }
 
 void AOFWeapon::BeginPlay()
@@ -112,6 +144,18 @@ void AOFWeapon::OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 		OBCharacter->SetOverlappingWeapon(nullptr);
 	}
 }
+
+void AOFWeapon::SpendAmmo()
+{
+	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
+	SetHUDAmmo();
+}
+
+void AOFWeapon::OnRep_Ammo()
+{
+	SetHUDAmmo();
+}
+
 // On the server
 void AOFWeapon::SetWeaponState(EWeaponState State)
 {
@@ -143,6 +187,9 @@ void AOFWeapon::SetWeaponState(EWeaponState State)
 	}
 	
 }
+
+
+
 // On the client
 void AOFWeapon::OnRep_WeaponState()
 {
@@ -162,5 +209,10 @@ void AOFWeapon::OnRep_WeaponState()
 			break;
 		// default: break;
 	}
+}
+
+bool AOFWeapon::IsEmpty()
+{
+	return Ammo <= 0;
 }
 

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Overfront/Enums/OFCombatStates.h"
+#include "Overfront/Enums/OFWeaponTypes.h"
 #include "Widgets/OFHUD.h"
 #include "OFCombatComponent.generated.h"
 
@@ -25,7 +27,10 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void EquipWeapon(AOFWeapon* WeaponToEquip);
-	
+	void Reload();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -39,6 +44,8 @@ protected:
 
 	void FireInput(bool bPressed);
 
+	void Fire();
+
 	UFUNCTION(Server, Reliable)
 	void ServerFire(const FVector_NetQuantize& HitTarget);
 
@@ -49,7 +56,9 @@ protected:
 
 	void SetHUDCrosshair(float DeltaTime);
 
-	void Fire();
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
+	void HandleReload();
 private:
 	class AOverfrontCharacter* Character;
 	class AOFPlayerController* Controller;
@@ -91,10 +100,33 @@ private:
 
 	void InterpFOV(float DeltaTime);
 
-	// Automatic Fire
+	/** Automatic Fire **/
 	FTimerHandle FireTimer;
 	bool bCanFire = true;
 
 	void StartFireTimer();
 	void FireTimerFinished();
+	bool CanFire();
+
+	/** Carrying Ammos **/
+
+	// Carried ammo for the currently equipped weapon
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo;
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	UPROPERTY(EditAnywhere, Category = "Ammo")
+	int32 StartingARAmmo = 30;
+
+	void InitializeCarriedAmmo();
+
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatState CombatState = ECombatState::ECS_Unoccupied;
+
+	UFUNCTION()
+	void OnRep_CombatState();
 };

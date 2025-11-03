@@ -90,6 +90,7 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::AimInputEnd);
 		EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &AOverfrontCharacter::FireInputStart);
         EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::FireInputEnd);
+        EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::ReloadInput);
 	}
 }
 
@@ -299,6 +300,14 @@ void AOverfrontCharacter::ServerEquip_Implementation()
 	}
 }
 
+void AOverfrontCharacter::ReloadInput(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		CombatComponent->Reload();
+	}
+}
+
 void AOverfrontCharacter::HideCharacterIfCameraClose()
 {
 	if (!IsLocallyControlled()) return;
@@ -477,6 +486,26 @@ void AOverfrontCharacter::PlayHitReactMontage()
 	}
 }
 
+void AOverfrontCharacter::PlayReloadMontage()
+{
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage)
+	{
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+
+		switch (CombatComponent->EquippedWeapon->GetWeaponType())
+		{
+			case EWeaponType::EWT_AssaultRifle:
+				SectionName = FName("Rifle");
+				break;
+		}
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
 	class AController* InstigatorController, AActor* DamageCauser)
 {
@@ -510,6 +539,10 @@ void AOverfrontCharacter::OnEliminated(float Delay)
 
 void AOverfrontCharacter::MulticastOnEliminated_Implementation()
 {
+	if (OFPlayerController)
+	{
+		OFPlayerController->SetHUDWeaponAmmo(0);
+	}
 	EnterRagdollState();
 	if (IsLocallyControlled())
 	{
@@ -571,6 +604,13 @@ FVector AOverfrontCharacter::GetHitTarget() const
 	if (CombatComponent == nullptr) return FVector(0, 0, 0);
 
 	return CombatComponent->Target;
+}
+
+ECombatState AOverfrontCharacter::GetCombatState() const
+{
+	if (CombatComponent == nullptr) return ECombatState::ECS_MAX;
+
+	return CombatComponent->CombatState;
 }
 #pragma endregion Getters
 
