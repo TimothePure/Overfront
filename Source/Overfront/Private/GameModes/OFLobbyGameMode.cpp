@@ -14,7 +14,7 @@ void AOFLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 		if (UWorld* World = GetWorld())
 		{
 			bUseSeamlessTravel = true;
-			World->ServerTravel(FString(TEXT("/Game/Overfront/Levels/LVL_Game?listen")));
+			World->ServerTravel(GameLevelPath);
 		}
 	}
 }

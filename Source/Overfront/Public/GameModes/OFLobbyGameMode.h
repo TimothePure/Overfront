@@ -17,4 +17,8 @@ class OVERFRONT_API AOFLobbyGameMode : public AGameMode
 public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
+
+private:
+	UPROPERTY(EditAnywhere, meta =(AllowPrivateAccess = true))
+	FString GameLevelPath;
 };
