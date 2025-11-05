@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/HorizontalBox.h"
 #include "OFCharacterOverlay.generated.h"
 
 /**
@@ -40,9 +39,12 @@ public:
 	UTextBlock* CarriedAmmoAmount;
 
 	UPROPERTY(meta = (BindWidget))
-	UHorizontalBox* AmmoBox;
+	class UCanvasPanel* WeaponPanel;
 
-	void SetAmmoHUDVisibility(bool bVisible);
+	void SetWeaponHUDVisibility(bool bVisible);
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* WeaponType;
 	
 private:
 	float Health;

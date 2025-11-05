@@ -28,13 +28,15 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void OnRep_Owner() override;
 	void SetHUDAmmo();
+	void SetHUDWeaponType();
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
 	void Dropped();
+	void AddAmmo(int32 Amount);
 
 	// Textures for the weapon crosshairs
 	UPROPERTY(EditAnywhere, Category = "Crosshair")
-	class UTexture2D* CrosshairCenter;
+	 UTexture2D* CrosshairCenter;
 
 	UPROPERTY(EditAnywhere, Category = "Crosshair")
 	UTexture2D* CrosshairLeft;
@@ -62,6 +64,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Automatic Fire")
 	bool bAutomaticFire = true;
 	
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* EquipSound;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -122,4 +127,6 @@ public:
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
 	bool IsEmpty();
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 };

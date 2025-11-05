@@ -100,6 +100,36 @@ void AOFPlayerController::SetHUDCarriedAmmo(int32 Ammo)
     }
 }
 
+void AOFPlayerController::SetHUDWeaponType(EWeaponType Type)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->WeaponType)
+    {
+        FString TypeText;
+        const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EWeaponType"), true);
+        if (!EnumPtr || Type == EWeaponType::EWT_MAX)
+        {
+            TypeText = FString("");
+        } else
+        {
+            TypeText = EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(Type)).ToString();
+        }
+        
+        HUD->CharacterOverlay->WeaponType->SetText(FText::FromString(TypeText));
+    }
+}
+
+void AOFPlayerController::SetWeaponHUDVisibility(bool bVisible)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay)
+    {
+        HUD->CharacterOverlay->SetWeaponHUDVisibility(bVisible);
+    }
+}
+
 void AOFPlayerController::OnEliminated(float RespawnDelay, FString KillerName)
 {
     if (DeathWidgetClass && IsLocalController())

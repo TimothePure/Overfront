@@ -122,6 +122,10 @@ void AOverfrontCharacter::BeginPlay()
 	}
 	
 	UpdateHUDHealth();
+	if (OFPlayerController)
+	{
+		OFPlayerController->SetWeaponHUDVisibility(false);
+	}
 	
 	if (HasAuthority())
 	{
@@ -542,6 +546,7 @@ void AOverfrontCharacter::MulticastOnEliminated_Implementation()
 	if (OFPlayerController)
 	{
 		OFPlayerController->SetHUDWeaponAmmo(0);
+		OFPlayerController->SetWeaponHUDVisibility(false);
 	}
 	EnterRagdollState();
 	if (IsLocallyControlled())

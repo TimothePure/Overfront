@@ -75,4 +75,6 @@ void UOFAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	bUseFABRIK = Character->GetCombatState() != ECombatState::ECS_Reloading;
+	bUseAimOffsets = Character->GetCombatState() != ECombatState::ECS_Reloading;
+	bTransformRightHand = Character->GetCombatState() != ECombatState::ECS_Reloading;
 }

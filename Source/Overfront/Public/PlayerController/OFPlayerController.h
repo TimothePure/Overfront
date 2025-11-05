@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Overfront/Enums/OFWeaponTypes.h"
 #include "OFPlayerController.generated.h"
 
 /**
@@ -19,6 +20,8 @@ public:
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
+	void SetHUDWeaponType(EWeaponType Type);
+	void SetWeaponHUDVisibility(bool bVisible);
 	void OnEliminated(float RespawnDelay, FString KillerName);
 	UFUNCTION(Client, Reliable)
 	void Client_OnEliminated(float RespawnDelay, const FString& KillerName);

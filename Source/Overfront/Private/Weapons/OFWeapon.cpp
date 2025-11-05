@@ -54,6 +54,25 @@ void AOFWeapon::SetHUDAmmo()
 	}
 }
 
+void AOFWeapon::SetHUDWeaponType()
+{
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(GetOwner()) : OwnerCharacter;
+	if (OwnerCharacter)
+	{
+		OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(OwnerCharacter->GetController()) : OwnerPlayerController;
+		if (OwnerPlayerController)
+		{
+			if (WeaponState == EWeaponState::EWS_Dropped)
+			{
+				OwnerPlayerController->SetHUDWeaponType(EWeaponType::EWT_MAX);
+			} else
+			{
+				OwnerPlayerController->SetHUDWeaponType(WeaponType);
+			}
+		}
+	}
+}
+
 void AOFWeapon::OnRep_Owner()
 {
 	Super::OnRep_Owner();
@@ -64,6 +83,7 @@ void AOFWeapon::OnRep_Owner()
 	} else
 	{
 		SetHUDAmmo();
+		SetHUDWeaponType();
 	}
 }
 
@@ -104,9 +124,16 @@ void AOFWeapon::Dropped()
 	SetWeaponState(EWeaponState::EWS_Dropped);
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
 	WeaponMesh->DetachFromComponent(DetachRules);
+	SetHUDWeaponType();
 	SetOwner(nullptr);
 	OwnerCharacter = nullptr;
 	OwnerPlayerController = nullptr;
+}
+
+void AOFWeapon::AddAmmo(int32 Amount)
+{
+	Ammo = FMath::Clamp(Ammo + Amount, 0, MagCapacity);
+	SetHUDAmmo();
 }
 
 void AOFWeapon::BeginPlay()

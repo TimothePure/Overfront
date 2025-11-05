@@ -3,6 +3,7 @@
 
 #include "Widgets/OFCharacterOverlay.h"
 
+#include "Components/CanvasPanel.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -24,7 +25,7 @@ void UOFCharacterOverlay::SetHealth(float NewHealth, float NewMaxHealth)
 	BloodOverlayImage->SetOpacity(MaxBloodOpacity * (1 - HealthPercent));
 }
 
-void UOFCharacterOverlay::SetAmmoHUDVisibility(bool bVisible)
+void UOFCharacterOverlay::SetWeaponHUDVisibility(bool bVisible)
 {
-	bVisible ? AmmoBox->SetVisibility(ESlateVisibility::Visible) : AmmoBox->SetVisibility(ESlateVisibility::Hidden);
+	bVisible ? WeaponPanel->SetVisibility(ESlateVisibility::Visible) : WeaponPanel->SetVisibility(ESlateVisibility::Hidden);
 }

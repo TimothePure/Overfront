@@ -59,6 +59,7 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
 	void HandleReload();
+	int32 AmountToReload();
 private:
 	class AOverfrontCharacter* Character;
 	class AOFPlayerController* Controller;
@@ -102,7 +103,7 @@ private:
 
 	/** Automatic Fire **/
 	FTimerHandle FireTimer;
-	bool bCanFire = true;
+	bool bCurrentlyFiring = false;
 
 	void StartFireTimer();
 	void FireTimerFinished();
@@ -129,4 +130,7 @@ private:
 
 	UFUNCTION()
 	void OnRep_CombatState();
+
+	void UpdateAmmoValues();
+	
 };
