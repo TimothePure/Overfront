@@ -259,6 +259,10 @@ void UOFCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
 		
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
+		if (!HitResult.bBlockingHit)
+		{
+			HitResult.ImpactPoint = End;
+		}
 	}
 
 	if (HitResult.GetActor() && HitResult.GetActor()->Implements<UOFInteractWithCrosshairInterface>())
