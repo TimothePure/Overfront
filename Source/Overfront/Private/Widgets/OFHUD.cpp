@@ -10,7 +10,6 @@
 void AOFHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	AddCharacterOverlay();
 }
 
 void AOFHUD::AddCharacterOverlay()

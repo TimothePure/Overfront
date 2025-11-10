@@ -6,7 +6,9 @@
 #include "Character/OverfrontCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/GameMode.h"
 #include "GameFramework/PlayerState.h"
+#include "Net/UnrealNetwork.h"
 #include "PlayerState/OFPlayerState.h"
 #include "Widgets/OFCharacterOverlay.h"
 #include "Widgets/OFDeathWidget.h"
@@ -17,6 +19,12 @@ void AOFPlayerController::BeginPlay()
     Super::BeginPlay();
     
     HUD = Cast<AOFHUD>(GetHUD());
+}
+
+void AOFPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AOFPlayerController, MatchState);
 }
 
 void AOFPlayerController::OnPossess(APawn* InPawn)
@@ -42,6 +50,12 @@ void AOFPlayerController::OnRep_PlayerState()
     }
 }
 
+void AOFPlayerController::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    SetHUDTime();
+}
+
 void AOFPlayerController::SetHUDHealth(float Health, float MaxHealth)
 {
     HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
@@ -53,6 +67,11 @@ void AOFPlayerController::SetHUDHealth(float Health, float MaxHealth)
         HUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
         FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
         HUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
+    } else
+    {
+        PendingHUDData.bPendingData = true;
+        PendingHUDData.Health = Health;
+        PendingHUDData.MaxHealth = MaxHealth;
     }
 }
 
@@ -64,6 +83,10 @@ void AOFPlayerController::SetHUDScore(float Score)
     {
         FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
         HUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
+    } else
+    {
+        PendingHUDData.bPendingData = true;
+        PendingHUDData.Score = Score;
     }
 }
 
@@ -75,6 +98,10 @@ void AOFPlayerController::SetHUDDefeats(int32 Defeats)
     {
         FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
         HUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
+    } else
+    {
+        PendingHUDData.bPendingData = true;
+        PendingHUDData.Defeats = Defeats;
     }
 }
 
@@ -130,6 +157,19 @@ void AOFPlayerController::SetWeaponHUDVisibility(bool bVisible)
     }
 }
 
+void AOFPlayerController::SetHUDMatchCountdown(float CountdownTime)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->MatchCountdownText)
+    {
+        int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+        int32 Seconds = CountdownTime - Minutes * 60.f;
+        FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+        HUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
+    }
+}
+
 void AOFPlayerController::OnEliminated(float RespawnDelay, FString KillerName)
 {
     if (DeathWidgetClass && IsLocalController())
@@ -147,4 +187,90 @@ void AOFPlayerController::OnEliminated(float RespawnDelay, FString KillerName)
 void AOFPlayerController::Client_OnEliminated_Implementation(float RespawnDelay, const FString& KillerName)
 {
     OnEliminated(RespawnDelay, KillerName);
+}
+
+void AOFPlayerController::SetHUDTime()
+{
+    uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetServerTime());
+    if (CountdownInt != SecondsLeft)
+    {
+        SetHUDMatchCountdown(SecondsLeft);
+    }
+
+    CountdownInt = SecondsLeft;
+}
+
+void AOFPlayerController::ServerRequestPlayerTime_Implementation(float TimeOfClientRequest)
+{
+    float ServerTimeOfReceipt = GetWorld()->GetTimeSeconds();
+    ClientReportServerTime(TimeOfClientRequest, ServerTimeOfReceipt);
+}
+
+void AOFPlayerController::ClientReportServerTime_Implementation(float TimeOfClientRequest, float TimeServerReceivedClientRequest)
+{
+    float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
+    float CurrentServerTime = TimeServerReceivedClientRequest + (RoundTripTime / 2);
+    ClientServerDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
+}
+
+float AOFPlayerController::GetServerTime()
+{
+    return GetWorld()->GetTimeSeconds() + ClientServerDelta;
+}
+
+void AOFPlayerController::ReceivedPlayer()
+{
+    Super::ReceivedPlayer();
+    if (IsLocalController())
+    {
+        ServerRequestPlayerTime(GetWorld()->GetTimeSeconds());
+        GetWorld()->GetTimerManager().SetTimer(TimeSyncTimerHandle, this, &AOFPlayerController::TimerSyncUpdate, TimeSyncFrequency, true);
+    }
+}
+
+void AOFPlayerController::TimerSyncUpdate()
+{
+    if (IsLocalController())
+    {
+        UE_LOG(LogTemp, Display, TEXT("AOFPlayerController::TimerSyncUpdate"));
+        ServerRequestPlayerTime(GetWorld()->GetTimeSeconds());
+        UE_LOG(LogTemp, Display, TEXT("%f"), ClientServerDelta);
+    }
+}
+
+void AOFPlayerController::OnMatchStateSet(FName State)
+{
+    MatchState = State;
+
+    if (MatchState == MatchState::InProgress)
+    {
+        if (HUD)
+        {
+            HUD->AddCharacterOverlay();
+            InitHUDOverlay();
+        }
+    }
+}
+
+void AOFPlayerController::OnRep_MatchState()
+{
+    if (MatchState == MatchState::InProgress)
+    {
+        if (HUD)
+        {
+            HUD->AddCharacterOverlay();
+            InitHUDOverlay();
+        }
+    }
+}
+
+void AOFPlayerController::InitHUDOverlay()
+{
+    if (PendingHUDData.bPendingData)
+    {
+        SetHUDHealth(PendingHUDData.Health, PendingHUDData.MaxHealth);
+        SetHUDScore(PendingHUDData.Score);
+        SetHUDDefeats(PendingHUDData.Defeats);
+        PendingHUDData = FPendingHUDData();
+    }
 }

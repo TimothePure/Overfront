@@ -8,6 +8,30 @@
 #include "PlayerController/OFPlayerController.h"
 #include "PlayerState/OFPlayerState.h"
 
+AOverfrontGameMode::AOverfrontGameMode()
+{
+	bDelayedStart = true;
+}
+
+void AOverfrontGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+	GetWorld()->GetTimerManager().SetTimer(WarmupTimerHandle, this, &AOverfrontGameMode::WarmupTimerFinished, WarmupTime, false);
+}
+
+void AOverfrontGameMode::OnMatchStateSet()
+{
+	Super::OnMatchStateSet();
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (AOFPlayerController* OFPlayerController = Cast<AOFPlayerController>(It->Get()))
+		{
+			OFPlayerController->OnMatchStateSet(MatchState);	
+		}
+	}
+}
+
 void AOverfrontGameMode::PlayerEliminated(AOverfrontCharacter* EliminatedCharacter, AOFPlayerController* VictimController, AOFPlayerController* AttackerController)
 {
 	AOFPlayerState* AttackerPlayerState = AttackerController ? Cast<AOFPlayerState>(AttackerController->PlayerState) : nullptr;
@@ -90,4 +114,12 @@ AActor* AOverfrontGameMode::GetFurthestPlayerStart(AController* EliminatedContro
 	}
 
 	return BestStart;
+}
+
+void AOverfrontGameMode::WarmupTimerFinished()
+{
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		StartMatch();
+	}
 }

@@ -30,15 +30,17 @@ class OVERFRONT_API AOFHUD : public AHUD
 
 public:
 	virtual void DrawHUD() override;
+	void AddCharacterOverlay();
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	TSubclassOf<class UUserWidget> CharacterOverlayClass;
 
+	UPROPERTY()
 	class UOFCharacterOverlay* CharacterOverlay;
 
 protected:
 	virtual void BeginPlay() override;
-	void AddCharacterOverlay();
+
 private:
 	FHUDPackage HUDPackage;
 
@@ -46,6 +48,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float CrosshairSpreadMax = 16.f;
+
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
 };
