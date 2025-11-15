@@ -8,6 +8,11 @@
 #include "PlayerController/OFPlayerController.h"
 #include "PlayerState/OFPlayerState.h"
 
+namespace MatchState
+{
+	const FName PostMatchCooldown = FName("PostMatchCooldown");
+}
+
 AOverfrontGameMode::AOverfrontGameMode()
 {
 	bDelayedStart = true;
@@ -16,7 +21,7 @@ AOverfrontGameMode::AOverfrontGameMode()
 void AOverfrontGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	GetWorld()->GetTimerManager().SetTimer(WarmupTimerHandle, this, &AOverfrontGameMode::WarmupTimerFinished, WarmupTime, false);
+	GetWorld()->GetTimerManager().SetTimer(WarmupTimerHandle, this, &AOverfrontGameMode::WarmupTimerFinished, WarmupDuration, false);
 }
 
 void AOverfrontGameMode::OnMatchStateSet()
@@ -29,6 +34,10 @@ void AOverfrontGameMode::OnMatchStateSet()
 		{
 			OFPlayerController->OnMatchStateSet(MatchState);	
 		}
+	}
+	if (MatchState == MatchState::InProgress)
+	{
+		GetWorld()->GetTimerManager().SetTimer(MatchTimerHandle, this, &AOverfrontGameMode::MatchTimerFinished, MatchDuration, false);
 	}
 }
 
@@ -121,5 +130,13 @@ void AOverfrontGameMode::WarmupTimerFinished()
 	if (MatchState == MatchState::WaitingToStart)
 	{
 		StartMatch();
+	}
+}
+
+void AOverfrontGameMode::MatchTimerFinished()
+{
+	if (MatchState == MatchState::InProgress)
+	{
+		SetMatchState(MatchState::PostMatchCooldown);
 	}
 }

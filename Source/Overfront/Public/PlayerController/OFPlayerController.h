@@ -7,6 +7,7 @@
 #include "Overfront/Enums/OFWeaponTypes.h"
 #include "OFPlayerController.generated.h"
 
+// Struct used to store the data the overlay needs to display when created
 USTRUCT()
 struct FPendingHUDData
 {
@@ -26,7 +27,21 @@ UCLASS()
 class OVERFRONT_API AOFPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+	/** Default Input Mapping Context **/
+	UPROPERTY(EditAnywhere, Category="Input")
+	class UInputMappingContext* DefaultMappingContext;
+
+	/** Combat Input Mapping Context **/
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputMappingContext* CombatMappingContext;
 public:
+	virtual void SetupInputComponent() override;
+	void OnEliminated(float RespawnDelay, FString KillerName);
+	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** HUD Updates Functions **/
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
@@ -35,9 +50,8 @@ public:
 	void SetHUDWeaponType(EWeaponType Type);
 	void SetWeaponHUDVisibility(bool bVisible);
 	void SetHUDMatchCountdown(float CountdownTime);
-	void OnEliminated(float RespawnDelay, FString KillerName);
-	virtual void Tick(float DeltaTime) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void SetHUDAnnouncementCountdown(float CountdownTime);
+	
 	
 	UFUNCTION(Client, Reliable)
 	void Client_OnEliminated(float RespawnDelay, const FString& KillerName);
@@ -66,14 +80,22 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Time")
 	float TimeSyncFrequency = 5.f;
 
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+
+	UFUNCTION(Client, Reliable)
+	void ClientReceiveMatchState(FName StateOfMatch, float Match, float Warmup);
+
+	void HandleMatchInProgress();
+	void HandlePostMatchCooldown();
 private:
 	class AOFHUD* HUD; 
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
 	TSubclassOf<class UOFDeathWidget> DeathWidgetClass;
 
-	float MatchTime = 120.f;
-
+	float MatchDuration = 0.f;
+	float WarmupDuration = 0.f;
 	uint32 CountdownInt = 0;
 	
 	FTimerHandle TimeSyncTimerHandle;
@@ -85,6 +107,7 @@ private:
 	UFUNCTION()
 	void OnRep_MatchState();
 
+	/** Overlay display data initialization **/ 
 	UPROPERTY()
 	FPendingHUDData PendingHUDData;
 	void InitHUDOverlay();

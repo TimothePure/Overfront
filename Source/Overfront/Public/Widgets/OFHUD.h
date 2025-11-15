@@ -30,13 +30,24 @@ class OVERFRONT_API AOFHUD : public AHUD
 
 public:
 	virtual void DrawHUD() override;
-	void AddCharacterOverlay();
 
+	/** Overlay Widget **/
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
-	TSubclassOf<class UUserWidget> CharacterOverlayClass;
+	TSubclassOf<UUserWidget> CharacterOverlayClass;
 
 	UPROPERTY()
 	class UOFCharacterOverlay* CharacterOverlay;
+	
+	void AddCharacterOverlay();
+	
+	/** Announcement Widget **/
+	UPROPERTY(EditAnywhere, Category = "Announcement")
+	TSubclassOf<UUserWidget> AnnouncementWidgetClass;
+
+	UPROPERTY()
+	class UOFAnnouncementWidget* AnnouncementWidget;
+
+	void AddAnnouncementWidget();
 
 protected:
 	virtual void BeginPlay() override;

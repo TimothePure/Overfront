@@ -3,22 +3,35 @@
 
 #include "PlayerController/OFPlayerController.h"
 
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "Character/OverfrontCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
-#include "GameFramework/PlayerState.h"
+#include "GameModes/OverfrontGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerState/OFPlayerState.h"
+#include "Widgets/OFAnnouncementWidget.h"
 #include "Widgets/OFCharacterOverlay.h"
 #include "Widgets/OFDeathWidget.h"
 #include "Widgets/OFHUD.h"
+
+class UEnhancedInputLocalPlayerSubsystem;
 
 void AOFPlayerController::BeginPlay()
 {
     Super::BeginPlay();
     
     HUD = Cast<AOFHUD>(GetHUD());
+    ServerCheckMatchState();
+
+    UE_LOG(LogTemp, Warning, TEXT("AOFPlayerController::BeginPlay() - IsLocalController=%d, LocalPlayer=%s, NetMode=%d"),
+    IsLocalController(),
+    GetLocalPlayer() ? *GetLocalPlayer()->GetName() : TEXT("NONE"),
+    (int32)GetNetMode());
+
 }
 
 void AOFPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -54,6 +67,41 @@ void AOFPlayerController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
     SetHUDTime();
+}
+
+void AOFPlayerController::SetupInputComponent()
+{
+    Super::SetupInputComponent();
+    
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    if (LocalPlayer)
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        {
+            Subsystem->ClearAllMappings();
+            Subsystem->AddMappingContext(DefaultMappingContext, 0);
+            Subsystem->AddMappingContext(CombatMappingContext, 0);
+        }
+    }
+}
+
+void AOFPlayerController::OnEliminated(float RespawnDelay, FString KillerName)
+{
+    if (DeathWidgetClass && IsLocalController())
+    {
+        UOFDeathWidget* DeathWidget = CreateWidget<UOFDeathWidget>(this, DeathWidgetClass);
+        if (DeathWidget)
+        {
+            DeathWidget->AddToViewport();
+            DeathWidget->SetKillerNameText(KillerName);
+            DeathWidget->StartRespawnTimer(RespawnDelay);
+        }
+    }
+}
+
+void AOFPlayerController::Client_OnEliminated_Implementation(float RespawnDelay, const FString& KillerName)
+{
+    OnEliminated(RespawnDelay, KillerName);
 }
 
 void AOFPlayerController::SetHUDHealth(float Health, float MaxHealth)
@@ -170,31 +218,37 @@ void AOFPlayerController::SetHUDMatchCountdown(float CountdownTime)
     }
 }
 
-void AOFPlayerController::OnEliminated(float RespawnDelay, FString KillerName)
+void AOFPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 {
-    if (DeathWidgetClass && IsLocalController())
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->AnnouncementWidget && HUD->AnnouncementWidget->WarmupTime)
     {
-        UOFDeathWidget* DeathWidget = CreateWidget<UOFDeathWidget>(this, DeathWidgetClass);
-        if (DeathWidget)
-        {
-            DeathWidget->AddToViewport();
-            DeathWidget->SetKillerNameText(KillerName);
-            DeathWidget->StartRespawnTimer(RespawnDelay);
-        }
+        int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+        int32 Seconds = CountdownTime - Minutes * 60.f;
+        FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+        HUD->AnnouncementWidget->WarmupTime->SetText(FText::FromString(CountdownText));
     }
-}
-
-void AOFPlayerController::Client_OnEliminated_Implementation(float RespawnDelay, const FString& KillerName)
-{
-    OnEliminated(RespawnDelay, KillerName);
 }
 
 void AOFPlayerController::SetHUDTime()
 {
-    uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetServerTime());
+    float TimeLeft = 0.f;
+    if (MatchState == MatchState::WaitingToStart) TimeLeft = WarmupDuration - GetServerTime();
+    else if (MatchState == MatchState::InProgress) TimeLeft = WarmupDuration + MatchDuration - GetServerTime();
+    
+    uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
     if (CountdownInt != SecondsLeft)
-    {
-        SetHUDMatchCountdown(SecondsLeft);
+    {   
+        if (MatchState == MatchState::WaitingToStart)
+        {
+            SetHUDAnnouncementCountdown(TimeLeft);
+        }
+
+        if (MatchState == MatchState::InProgress)
+        {
+            SetHUDMatchCountdown(TimeLeft);
+        }
     }
 
     CountdownInt = SecondsLeft;
@@ -238,32 +292,6 @@ void AOFPlayerController::TimerSyncUpdate()
     }
 }
 
-void AOFPlayerController::OnMatchStateSet(FName State)
-{
-    MatchState = State;
-
-    if (MatchState == MatchState::InProgress)
-    {
-        if (HUD)
-        {
-            HUD->AddCharacterOverlay();
-            InitHUDOverlay();
-        }
-    }
-}
-
-void AOFPlayerController::OnRep_MatchState()
-{
-    if (MatchState == MatchState::InProgress)
-    {
-        if (HUD)
-        {
-            HUD->AddCharacterOverlay();
-            InitHUDOverlay();
-        }
-    }
-}
-
 void AOFPlayerController::InitHUDOverlay()
 {
     if (PendingHUDData.bPendingData)
@@ -272,5 +300,88 @@ void AOFPlayerController::InitHUDOverlay()
         SetHUDScore(PendingHUDData.Score);
         SetHUDDefeats(PendingHUDData.Defeats);
         PendingHUDData = FPendingHUDData();
+    }
+}
+
+
+void AOFPlayerController::ServerCheckMatchState_Implementation()
+{
+    if (AOverfrontGameMode* GameMode = Cast<AOverfrontGameMode>(UGameplayStatics::GetGameMode(this)))
+    {
+        MatchDuration = GameMode->MatchDuration;
+        WarmupDuration = GameMode->WarmupDuration;
+        MatchState = GameMode->GetMatchState();
+        ClientReceiveMatchState(MatchState, MatchDuration, WarmupDuration);
+    }
+}
+
+void AOFPlayerController::ClientReceiveMatchState_Implementation(FName StateOfMatch, float Match, float Warmup)
+{
+    MatchDuration = Match;
+    WarmupDuration = Warmup;
+    MatchState = StateOfMatch;
+    OnMatchStateSet(MatchState);
+}
+
+void AOFPlayerController::OnMatchStateSet(FName State)
+{
+    MatchState = State;
+    
+    if (!IsLocalController()) return;
+    
+    if (MatchState == MatchState::WaitingToStart && HUD)
+    {
+        HUD->AddAnnouncementWidget();
+    }
+    else if (MatchState == MatchState::PostMatchCooldown)
+    {
+        HandlePostMatchCooldown();
+    }
+    else if (MatchState == MatchState::InProgress)
+    {
+        HandleMatchInProgress();
+    }
+}
+
+void AOFPlayerController::OnRep_MatchState()
+{
+    if (!IsLocalController()) return;
+    
+    if (MatchState == MatchState::WaitingToStart && HUD)
+    {
+        HUD->AddAnnouncementWidget();
+    }
+    else if (MatchState == MatchState::PostMatchCooldown)
+    {
+        HandlePostMatchCooldown();
+    }
+    else if (MatchState == MatchState::InProgress)
+    {
+        HandleMatchInProgress();
+    }
+}
+
+void AOFPlayerController::HandleMatchInProgress()
+{
+    if (HUD)
+    {
+        HUD->AddCharacterOverlay();
+        InitHUDOverlay();
+        if (HUD->AnnouncementWidget)
+        {
+            HUD->AnnouncementWidget->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
+}
+
+void AOFPlayerController::HandlePostMatchCooldown()
+{
+    if (HUD)
+    {
+        HUD->CharacterOverlay->RemoveFromParent();
+        if (HUD->AnnouncementWidget)
+        {
+            HUD->AnnouncementWidget->SetVisibility(ESlateVisibility::Visible);
+        }
     }
 }

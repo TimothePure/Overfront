@@ -4,6 +4,7 @@
 #include "Widgets/OFHUD.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Widgets/OFAnnouncementWidget.h"
 #include "Widgets/OFCharacterOverlay.h"
 
 
@@ -19,6 +20,18 @@ void AOFHUD::AddCharacterOverlay()
 	{
 		CharacterOverlay = CreateWidget<UOFCharacterOverlay>(PlayerController, CharacterOverlayClass);
 		CharacterOverlay->AddToViewport();
+	}
+}
+
+void AOFHUD::AddAnnouncementWidget()
+{
+	if (AnnouncementWidget != nullptr) return;  // Prevent duplicates
+	
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if (PlayerController && AnnouncementWidgetClass)
+	{
+		AnnouncementWidget = CreateWidget<UOFAnnouncementWidget>(PlayerController, AnnouncementWidgetClass);
+		AnnouncementWidget->AddToViewport();
 	}
 }
 

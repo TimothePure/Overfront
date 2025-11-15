@@ -22,8 +22,6 @@
 
 #pragma region ClassSetup
 
-class AOverfrontGameMode;
-
 AOverfrontCharacter::AOverfrontCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -77,6 +75,8 @@ void AOverfrontCharacter::PostInitializeComponents()
 
 void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AOverfrontCharacter::DoJumpStart);
@@ -97,22 +97,6 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 void AOverfrontCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	OFPlayerController = Cast<AOFPlayerController>(GetController());
-	if (OFPlayerController)
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(OFPlayerController->GetLocalPlayer()))
-		{
-			if (DefaultMappingContext)
-			{
-				Subsystem->AddMappingContext(DefaultMappingContext, 0);
-			}
-			if (CombatMappingContext)
-			{
-				Subsystem->AddMappingContext(CombatMappingContext, 0);
-			}
-		}
-	}
 
 	// Called inside BeginPlay and Controller->OnRep_PlayerState to ensure that the HUD is setup correctly
 	if (AOFPlayerState* PS = GetPlayerState<AOFPlayerState>())

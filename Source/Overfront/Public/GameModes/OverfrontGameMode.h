@@ -6,6 +6,11 @@
 #include "GameFramework/GameMode.h"
 #include "OverfrontGameMode.generated.h"
 
+
+namespace MatchState
+{
+	extern OVERFRONT_API const FName PostMatchCooldown; // Match duration has been reached. Display winner and begin cooldown.
+}
 /**
  * 
  */
@@ -17,10 +22,15 @@ public:
 	AOverfrontGameMode();
 	virtual void PlayerEliminated(class AOverfrontCharacter* EliminatedCharacter, class AOFPlayerController* VictimController, AOFPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
-	
+
 	UPROPERTY(EditDefaultsOnly)
-	float WarmupTime = 10.f;
-	
+	float WarmupDuration = 10.f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MatchDuration = 300.f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float CooldownDuration = 10.f;
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnMatchStateSet() override;
@@ -32,4 +42,6 @@ private:
 
 	FTimerHandle WarmupTimerHandle;
 	void WarmupTimerFinished();
+	FTimerHandle MatchTimerHandle;
+	void MatchTimerFinished();
 };
