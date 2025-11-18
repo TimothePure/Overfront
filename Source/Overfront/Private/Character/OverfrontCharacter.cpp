@@ -117,6 +117,15 @@ void AOverfrontCharacter::BeginPlay()
 	}
 }
 
+void AOverfrontCharacter::Destroyed()
+{
+	Super::Destroyed();
+	if (CombatComponent && CombatComponent->EquippedWeapon)
+	{
+		CombatComponent->EquippedWeapon->Destroy();
+	}
+}
+
 void AOverfrontCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

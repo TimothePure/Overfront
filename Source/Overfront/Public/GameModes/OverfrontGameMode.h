@@ -42,6 +42,10 @@ private:
 
 	FTimerHandle WarmupTimerHandle;
 	void WarmupTimerFinished();
+	
 	FTimerHandle MatchTimerHandle;
 	void MatchTimerFinished();
+
+	FTimerHandle CooldownTimerHandle;
+	void CooldownTimerFinished();
 };

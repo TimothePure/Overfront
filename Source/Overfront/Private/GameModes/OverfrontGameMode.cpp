@@ -39,6 +39,10 @@ void AOverfrontGameMode::OnMatchStateSet()
 	{
 		GetWorld()->GetTimerManager().SetTimer(MatchTimerHandle, this, &AOverfrontGameMode::MatchTimerFinished, MatchDuration, false);
 	}
+	if (MatchState == MatchState::PostMatchCooldown)
+	{
+		GetWorld()->GetTimerManager().SetTimer(MatchTimerHandle, this, &AOverfrontGameMode::CooldownTimerFinished, CooldownDuration, false);
+	}
 }
 
 void AOverfrontGameMode::PlayerEliminated(AOverfrontCharacter* EliminatedCharacter, AOFPlayerController* VictimController, AOFPlayerController* AttackerController)
@@ -138,5 +142,13 @@ void AOverfrontGameMode::MatchTimerFinished()
 	if (MatchState == MatchState::InProgress)
 	{
 		SetMatchState(MatchState::PostMatchCooldown);
+	}
+}
+
+void AOverfrontGameMode::CooldownTimerFinished()
+{
+	if (MatchState == MatchState::PostMatchCooldown)
+	{
+		RestartGame();
 	}
 }

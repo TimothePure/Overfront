@@ -84,18 +84,23 @@ protected:
 	void ServerCheckMatchState();
 
 	UFUNCTION(Client, Reliable)
-	void ClientReceiveMatchState(FName StateOfMatch, float Match, float Warmup);
+	void ClientReceiveMatchState(FName StateOfMatch, float Match, float Warmup, float Cooldown);
 
 	void HandleMatchInProgress();
 	void HandlePostMatchCooldown();
 private:
-	class AOFHUD* HUD; 
+	UPROPERTY()
+	class AOFHUD* HUD;
+
+	UPROPERTY()
+	class AOverfrontGameMode* GameMode;
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
 	TSubclassOf<class UOFDeathWidget> DeathWidgetClass;
 
 	float MatchDuration = 0.f;
 	float WarmupDuration = 0.f;
+	float CooldownDuration = 0.f;
 	uint32 CountdownInt = 0;
 	
 	FTimerHandle TimeSyncTimerHandle;

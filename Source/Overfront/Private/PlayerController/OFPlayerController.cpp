@@ -211,6 +211,12 @@ void AOFPlayerController::SetHUDMatchCountdown(float CountdownTime)
     
     if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->MatchCountdownText)
     {
+        if (CountdownTime < 0.f)
+        {
+            HUD->CharacterOverlay->MatchCountdownText->SetText(FText());
+            return;
+        }
+        
         int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
         int32 Seconds = CountdownTime - Minutes * 60.f;
         FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
@@ -224,6 +230,12 @@ void AOFPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
     
     if (HUD && HUD->AnnouncementWidget && HUD->AnnouncementWidget->WarmupTime)
     {
+        if (CountdownTime < 0.f)
+        {
+            HUD->AnnouncementWidget->WarmupTime->SetText(FText());
+            return;
+        }
+        
         int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
         int32 Seconds = CountdownTime - Minutes * 60.f;
         FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
@@ -236,11 +248,13 @@ void AOFPlayerController::SetHUDTime()
     float TimeLeft = 0.f;
     if (MatchState == MatchState::WaitingToStart) TimeLeft = WarmupDuration - GetServerTime();
     else if (MatchState == MatchState::InProgress) TimeLeft = WarmupDuration + MatchDuration - GetServerTime();
-    
+    else if (MatchState == MatchState::PostMatchCooldown) TimeLeft = WarmupDuration + MatchDuration + CooldownDuration - GetServerTime();
+
     uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
+    
     if (CountdownInt != SecondsLeft)
     {   
-        if (MatchState == MatchState::WaitingToStart)
+        if (MatchState == MatchState::WaitingToStart || MatchState == MatchState::PostMatchCooldown)
         {
             SetHUDAnnouncementCountdown(TimeLeft);
         }
@@ -306,19 +320,22 @@ void AOFPlayerController::InitHUDOverlay()
 
 void AOFPlayerController::ServerCheckMatchState_Implementation()
 {
-    if (AOverfrontGameMode* GameMode = Cast<AOverfrontGameMode>(UGameplayStatics::GetGameMode(this)))
+    GameMode = GameMode == nullptr ? Cast<AOverfrontGameMode>(UGameplayStatics::GetGameMode(this)) : GameMode;
+    if (GameMode)
     {
         MatchDuration = GameMode->MatchDuration;
         WarmupDuration = GameMode->WarmupDuration;
+        CooldownDuration = GameMode->CooldownDuration;
         MatchState = GameMode->GetMatchState();
-        ClientReceiveMatchState(MatchState, MatchDuration, WarmupDuration);
+        ClientReceiveMatchState(MatchState, MatchDuration, WarmupDuration, CooldownDuration);
     }
 }
 
-void AOFPlayerController::ClientReceiveMatchState_Implementation(FName StateOfMatch, float Match, float Warmup)
+void AOFPlayerController::ClientReceiveMatchState_Implementation(FName StateOfMatch, float Match, float Warmup, float Cooldown)
 {
     MatchDuration = Match;
     WarmupDuration = Warmup;
+    CooldownDuration = Cooldown;
     MatchState = StateOfMatch;
     OnMatchStateSet(MatchState);
 }
@@ -335,7 +352,12 @@ void AOFPlayerController::OnMatchStateSet(FName State)
     }
     else if (MatchState == MatchState::PostMatchCooldown)
     {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        {
+            Subsystem->RemoveMappingContext(CombatMappingContext);
+        }
         HandlePostMatchCooldown();
+        
     }
     else if (MatchState == MatchState::InProgress)
     {
@@ -353,6 +375,10 @@ void AOFPlayerController::OnRep_MatchState()
     }
     else if (MatchState == MatchState::PostMatchCooldown)
     {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        {
+            Subsystem->RemoveMappingContext(CombatMappingContext);
+        }
         HandlePostMatchCooldown();
     }
     else if (MatchState == MatchState::InProgress)
@@ -379,9 +405,12 @@ void AOFPlayerController::HandlePostMatchCooldown()
     if (HUD)
     {
         HUD->CharacterOverlay->RemoveFromParent();
-        if (HUD->AnnouncementWidget)
+        if (HUD->AnnouncementWidget && HUD->AnnouncementWidget->AnnouncementText && HUD->AnnouncementWidget->InfoText)
         {
             HUD->AnnouncementWidget->SetVisibility(ESlateVisibility::Visible);
+            FString AnnouncementText("New match starts in:");
+            HUD->AnnouncementWidget->AnnouncementText->SetText(FText::FromString(AnnouncementText));
+            HUD->AnnouncementWidget->InfoText->SetText(FText());
         }
     }
 }
