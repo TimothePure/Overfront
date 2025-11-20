@@ -4,6 +4,7 @@
 #include "GameModes/OverfrontGameMode.h"
 #include "Character/OverfrontCharacter.h"
 #include "GameFramework/PlayerStart.h"
+#include "GameStates/OFGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerController/OFPlayerController.h"
 #include "PlayerState/OFPlayerState.h"
@@ -38,6 +39,11 @@ void AOverfrontGameMode::OnMatchStateSet()
 	if (MatchState == MatchState::InProgress)
 	{
 		GetWorld()->GetTimerManager().SetTimer(MatchTimerHandle, this, &AOverfrontGameMode::MatchTimerFinished, MatchDuration, false);
+
+		if (AOFGameState* GS = GetGameState<AOFGameState>())
+		{
+			GS->RebuildScoreboardFromPlayers(); 
+		}
 	}
 	if (MatchState == MatchState::PostMatchCooldown)
 	{
@@ -50,9 +56,12 @@ void AOverfrontGameMode::PlayerEliminated(AOverfrontCharacter* EliminatedCharact
 	AOFPlayerState* AttackerPlayerState = AttackerController ? Cast<AOFPlayerState>(AttackerController->PlayerState) : nullptr;
 	AOFPlayerState* VictimPlayerState = VictimController ? Cast<AOFPlayerState>(VictimController->PlayerState) : nullptr;
 
-	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
+	AOFGameState* OFGameState = GetGameState<AOFGameState>();
+	
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && OFGameState)
 	{
 		AttackerPlayerState->AddToScore(1.f);
+		OFGameState->UpdateScoreboard(AttackerPlayerState);
 	}
 
 	if (VictimPlayerState)

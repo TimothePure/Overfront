@@ -51,7 +51,7 @@ public:
 	void SetWeaponHUDVisibility(bool bVisible);
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
-	
+	void SetHUDScoreboard(const TArray<struct FScoreboardEntry>& Scoreboard);
 	
 	UFUNCTION(Client, Reliable)
 	void Client_OnEliminated(float RespawnDelay, const FString& KillerName);

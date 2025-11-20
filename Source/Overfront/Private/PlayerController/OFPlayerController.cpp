@@ -10,6 +10,7 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
 #include "GameModes/OverfrontGameMode.h"
+#include "GameStates/OFGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerState/OFPlayerState.h"
@@ -17,6 +18,7 @@
 #include "Widgets/OFCharacterOverlay.h"
 #include "Widgets/OFDeathWidget.h"
 #include "Widgets/OFHUD.h"
+#include "Widgets/OFScoreboardWidget.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 
@@ -182,7 +184,7 @@ void AOFPlayerController::SetHUDWeaponType(EWeaponType Type)
     if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->WeaponType)
     {
         FString TypeText;
-        const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EWeaponType"), true);
+        const UEnum* EnumPtr = StaticEnum<EWeaponType>();
         if (!EnumPtr || Type == EWeaponType::EWT_MAX)
         {
             TypeText = FString("");
@@ -240,6 +242,16 @@ void AOFPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
         int32 Seconds = CountdownTime - Minutes * 60.f;
         FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
         HUD->AnnouncementWidget->WarmupTime->SetText(FText::FromString(CountdownText));
+    }
+}
+
+void AOFPlayerController::SetHUDScoreboard(const TArray<FScoreboardEntry>& Scoreboard)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->ScoreboardWidget)
+    {
+        HUD->CharacterOverlay->ScoreboardWidget->UpdateScoreboard(Scoreboard);
     }
 }
 
@@ -410,7 +422,35 @@ void AOFPlayerController::HandlePostMatchCooldown()
             HUD->AnnouncementWidget->SetVisibility(ESlateVisibility::Visible);
             FString AnnouncementText("New match starts in:");
             HUD->AnnouncementWidget->AnnouncementText->SetText(FText::FromString(AnnouncementText));
-            HUD->AnnouncementWidget->InfoText->SetText(FText());
+
+            FString InfoText;
+            AOFGameState* GameState = Cast<AOFGameState>(UGameplayStatics::GetGameState(this));
+            PlayerState = PlayerState == nullptr ? GetPlayerState<AOFPlayerState>() : PlayerState;
+            if (GameState && PlayerState)
+            {
+                TArray<AOFPlayerState*>TopPlayers = GameState->GetTopScoringPlayers();
+                if (TopPlayers.Num() <= 0)
+                {
+                    InfoText = FString("There is no winner");
+                } else if (TopPlayers.Num() == 1)
+                {
+                    if (TopPlayers[0] == PlayerState)
+                    {
+                        InfoText = FString("You are the winner !");
+                    } else
+                    {
+                        InfoText = FString::Printf(TEXT("Winner: \n%s"), *TopPlayers[0]->GetPlayerName());
+                    }
+                } else // More than one player
+                {
+                    InfoText = FString("Players tied for the win:\n");
+                    for (auto TiedPlayer : TopPlayers)
+                    {
+                        InfoText.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+                    }
+                }
+            }
+            HUD->AnnouncementWidget->InfoText->SetText(FText::FromString(InfoText));
         }
     }
 }

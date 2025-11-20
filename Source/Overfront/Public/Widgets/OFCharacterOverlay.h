@@ -48,7 +48,9 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchCountdownText;
-	
+
+	UPROPERTY(meta=(BindWidget))
+	class UOFScoreboardWidget* ScoreboardWidget;
 private:
 	float Health;
 	float MaxHealth;

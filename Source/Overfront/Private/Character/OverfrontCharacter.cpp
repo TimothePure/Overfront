@@ -13,6 +13,7 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/OverfrontGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Overfront/Overfront.h"
@@ -120,7 +121,10 @@ void AOverfrontCharacter::BeginPlay()
 void AOverfrontCharacter::Destroyed()
 {
 	Super::Destroyed();
-	if (CombatComponent && CombatComponent->EquippedWeapon)
+
+	AOverfrontGameMode* OverfrontGameMode = Cast<AOverfrontGameMode>(UGameplayStatics::GetGameMode(this));
+	bool bMatchNotInProgress = OverfrontGameMode && OverfrontGameMode->GetMatchState() != MatchState::InProgress;
+	if (CombatComponent && CombatComponent->EquippedWeapon && bMatchNotInProgress)
 	{
 		CombatComponent->EquippedWeapon->Destroy();
 	}
@@ -503,8 +507,8 @@ void AOverfrontCharacter::PlayReloadMontage()
 	}
 }
 
-void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
-	class AController* InstigatorController, AActor* DamageCauser)
+void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
+	AController* InstigatorController, AActor* DamageCauser)
 {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	if (IsLocallyControlled())
