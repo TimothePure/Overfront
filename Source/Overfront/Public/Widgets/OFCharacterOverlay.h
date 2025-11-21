@@ -51,10 +51,22 @@ public:
 
 	UPROPERTY(meta=(BindWidget))
 	class UOFScoreboardWidget* ScoreboardWidget;
+
+	void BlinkCountdown();
+
 private:
 	float Health;
 	float MaxHealth;
 	
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
 	float MaxBloodOpacity = 0.3f;
+
+	FTimerHandle FadeTimerHandle;
+	FTimerHandle FadeStopHandle;
+
+	bool bFadingOut = true;
+	float Elapsed = 0.f;
+	float HalfInterval = 0.f;
+	
+	void UpdateSmoothFade();
 };

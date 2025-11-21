@@ -216,12 +216,20 @@ void AOFPlayerController::SetHUDMatchCountdown(float CountdownTime)
         if (CountdownTime < 0.f)
         {
             HUD->CharacterOverlay->MatchCountdownText->SetText(FText());
+            HUD->CharacterOverlay->MatchCountdownText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
             return;
         }
         
         int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
         int32 Seconds = CountdownTime - Minutes * 60.f;
         FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+
+        if (CountdownTime < 10.f)
+        {
+            HUD->CharacterOverlay->MatchCountdownText->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
+            HUD->CharacterOverlay->BlinkCountdown();
+        }
+        
         HUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
     }
 }

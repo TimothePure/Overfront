@@ -49,6 +49,7 @@ public:
 
 	void AddAnnouncementWidget();
 
+
 protected:
 	virtual void BeginPlay() override;
 

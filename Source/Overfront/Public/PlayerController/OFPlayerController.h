@@ -35,6 +35,7 @@ class OVERFRONT_API AOFPlayerController : public APlayerController
 	/** Combat Input Mapping Context **/
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputMappingContext* CombatMappingContext;
+
 public:
 	virtual void SetupInputComponent() override;
 	void OnEliminated(float RespawnDelay, FString KillerName);
