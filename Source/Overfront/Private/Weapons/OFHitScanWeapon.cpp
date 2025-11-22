@@ -6,6 +6,7 @@
 #include "Character/OverfrontCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 
 
 AOFHitScanWeapon::AOFHitScanWeapon()
@@ -25,9 +26,9 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
 	if (OwnerPawn == nullptr) return;
 	AController* InstigatorController = OwnerPawn->GetController();
-	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
+	
 	  
-	if (MuzzleFlashSocket && InstigatorController)
+	if (const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash"))
 	{
 		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 		FVector Start = SocketTransform.GetLocation();
@@ -37,19 +38,27 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 		if (UWorld* World = GetWorld())
 		{
 			World->LineTraceSingleByChannel(FireHit, Start, End, ECC_Visibility);
+			FVector BeamEnd = End;
 			if (FireHit.bBlockingHit)
 			{
-				if (AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor()))
+				BeamEnd = FireHit.ImpactPoint;
+				AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor());
+				if (HitCharacter && HasAuthority() && InstigatorController)
 				{
-					if (HasAuthority())
-					{
-						UGameplayStatics::ApplyDamage(HitCharacter, Damage, InstigatorController, this, UDamageType::StaticClass());
-					}
+					UGameplayStatics::ApplyDamage(HitCharacter, Damage, InstigatorController, this, UDamageType::StaticClass());
 				}
 				
 				if (ImpactParticles)
 				{
 					UGameplayStatics::SpawnEmitterAtLocation(World, ImpactParticles, FireHit.ImpactPoint, FireHit.ImpactNormal.Rotation());
+				}
+			}
+			
+			if (BeamParticles)
+			{
+				if (UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(World, BeamParticles, SocketTransform))
+				{
+					Beam->SetVectorParameter(FName("Target"), BeamEnd);
 				}
 			}
 		}
