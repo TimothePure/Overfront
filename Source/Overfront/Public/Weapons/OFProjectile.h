@@ -13,7 +13,6 @@ class OVERFRONT_API AOFProjectile : public AActor
 
 public:
 	AOFProjectile();
-	virtual void Tick(float DeltaTime) override;
 	virtual void Destroyed() override;
 protected:
 	virtual void BeginPlay() override;
@@ -24,22 +23,22 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
 
-private:
-	UPROPERTY(EditAnywhere)
-	class UBoxComponent* CollisionBox;
-
-	UPROPERTY(VisibleAnywhere)
-	class UProjectileMovementComponent* ProjectileMovementComponent;
-
-	UPROPERTY(EditAnywhere)
-	 UParticleSystem* Tracer;
-
-	UPROPERTY()
-	UParticleSystemComponent* TracerComponent;
-
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;
 
 	UPROPERTY(EditAnywhere)
 	USoundBase* ImpactSound;
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* CollisionBox;
+
+private:
+	UPROPERTY(VisibleAnywhere)
+	class UProjectileMovementComponent* ProjectileMovementComponent;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* Tracer;
+
+	UPROPERTY()
+	UParticleSystemComponent* TracerComponent;
 };

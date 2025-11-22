@@ -11,7 +11,7 @@
 
 AOFProjectile::AOFProjectile()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Box"));
@@ -46,11 +46,6 @@ void AOFProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
 	FVector NormalImpulse, const FHitResult& HitResult)
 {
 	Destroy();
-}
-
-void AOFProjectile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 void AOFProjectile::Destroyed()

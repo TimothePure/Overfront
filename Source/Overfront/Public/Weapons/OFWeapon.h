@@ -35,36 +35,36 @@ public:
 	void AddAmmo(int32 Amount);
 
 	// Textures for the weapon crosshairs
-	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshair")
 	 UTexture2D* CrosshairCenter;
 
-	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshair")
 	UTexture2D* CrosshairLeft;
 
-	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshair")
 	UTexture2D* CrosshairRight;
 
-	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshair")
 	UTexture2D* CrosshairTop;
 
-	UPROPERTY(EditAnywhere, Category = "Crosshair")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshair")
 	UTexture2D* CrosshairBottom;
 
 	// Zoomed FOV while aiming
-	UPROPERTY(EditAnywhere, Category = "Aiming")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Aiming")
 	float ZoomedFOV = 30.f;
 
-	UPROPERTY(EditAnywhere, Category = "Aiming")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Aiming")
 	float ZoomInterpSpeed = 20.f;
 
 	// Automatic Fire properties
-	UPROPERTY(EditAnywhere, Category = "Automatic Fire")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Automatic Fire")
 	float FireDelay = 0.15f;
 
-	UPROPERTY(EditAnywhere, Category = "Automatic Fire")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Automatic Fire")
 	bool bAutomaticFire = true;
 	
-	UPROPERTY(EditAnywhere, Category = "Sounds")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Sounds")
 	USoundBase* EquipSound;
 
 protected:
@@ -78,28 +78,28 @@ protected:
 	void OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComponent,AActor* OtherActor,UPrimitiveComponent* OtherComp,int32 OtherBodyIndex);
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	USkeletalMeshComponent* WeaponMesh;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	class USphereComponent* AreaSphere;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties", ReplicatedUsing=OnRep_WeaponState)
+	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties", ReplicatedUsing=OnRep_WeaponState)
 	EWeaponState WeaponState;
 
 	UFUNCTION()
 	void OnRep_WeaponState();
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	class UWidgetComponent* PickupWidget;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	class UAnimationAsset* FireAnimation;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	TSubclassOf<class AOFBulletShell> BulletShellClass;
 
-	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo, Category = "Weapon|Properties")
 	int32 Ammo;
 
 	UFUNCTION()
@@ -107,7 +107,7 @@ private:
 
 	void SpendAmmo();
 	
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	int32 MagCapacity;
 
 	UPROPERTY()
@@ -116,7 +116,7 @@ private:
 	UPROPERTY()
 	class AOFPlayerController* OwnerPlayerController;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	EWeaponType WeaponType;
 	
 public:
