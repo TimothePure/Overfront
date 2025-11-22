@@ -4,7 +4,6 @@
 #include "Weapons/OFProjectile.h"
 
 #include "Components/BoxComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Overfront/Overfront.h"
 #include "Sound/SoundBase.h"
@@ -22,9 +21,6 @@ AOFProjectile::AOFProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
-
-	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement Component"));
-	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 }
 
 void AOFProjectile::BeginPlay()

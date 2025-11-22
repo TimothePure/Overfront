@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
 #include "Components/AudioComponent.h"
+#include "Weapons/OFRocketMovementComponent.h"
 
 
 AOFProjectileRocket::AOFProjectileRocket()
@@ -16,6 +17,10 @@ AOFProjectileRocket::AOFProjectileRocket()
 	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RocketMesh"));
 	RocketMesh->SetupAttachment(RootComponent);
 	RocketMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	ProjectileMovementComponent = CreateDefaultSubobject<UOFRocketMovementComponent>(TEXT("Rocket Movement Component"));
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->SetIsReplicated(true);
 }
 
 void AOFProjectileRocket::BeginPlay()
@@ -41,6 +46,11 @@ void AOFProjectileRocket::BeginPlay()
 
 void AOFProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult)
 {
+	if (OtherActor == GetOwner())
+	{
+		return;
+	}
+	
 	APawn* FiringPawn = GetInstigator();
 	if (FiringPawn && HasAuthority())
 	{
