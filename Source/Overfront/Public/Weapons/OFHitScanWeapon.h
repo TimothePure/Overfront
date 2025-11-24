@@ -12,28 +12,39 @@ class OVERFRONT_API AOFHitScanWeapon : public AOFWeapon
 	GENERATED_BODY()
 
 public:
-	AOFHitScanWeapon();
 	virtual void Fire(const FVector& HitTarget) override;
 
 protected:
-	virtual void BeginPlay() override;
+	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
+
+	void WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
 	
-private:
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
 
 	UPROPERTY(EditAnywhere)
-	class UParticleSystem* ImpactParticles;
-
-	UPROPERTY(EditAnywhere)
-	UParticleSystem* BeamParticles;
-
-	UPROPERTY(EditAnywhere)
-	UParticleSystem* MuzzleFlash;
-
+	UParticleSystem* ImpactParticles;
+	
 	UPROPERTY(EditAnywhere)
 	USoundBase* FireSound;
 
 	UPROPERTY(EditAnywhere)
 	USoundBase* HitSound;
+
+private:
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* BeamParticles;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* MuzzleFlash;
+	
+	/** Trace with scatter **/
+	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
+	float DistanceToSphere = 800.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
+	float SphereRadius = 75.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
+	bool bUseScatter = false;
 };

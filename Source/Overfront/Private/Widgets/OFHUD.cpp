@@ -16,7 +16,7 @@ void AOFHUD::BeginPlay()
 void AOFHUD::AddCharacterOverlay()
 {
 	APlayerController* PlayerController = GetOwningPlayerController();
-	if (PlayerController && CharacterOverlayClass)
+	if (PlayerController && CharacterOverlayClass && !CharacterOverlay)
 	{
 		CharacterOverlay = CreateWidget<UOFCharacterOverlay>(PlayerController, CharacterOverlayClass);
 		CharacterOverlay->AddToViewport();

@@ -10,7 +10,6 @@
 #include "OFCombatComponent.generated.h"
 
 
-#define TRACE_LENGTH 80000.f
 #define CAMERA_IGNORE_DISTANCE = 350.f;
 
 class AOFWeapon;
@@ -131,6 +130,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Ammo")
 	int32 StartingSMGAmmo = 30;
+
+	UPROPERTY(EditAnywhere, Category = "Ammo")
+	int32 StartingShotgunAmmo = 8;
 
 	void InitializeCarriedAmmo();
 

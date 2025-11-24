@@ -10,7 +10,6 @@
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/OFPlayerController.h"
 #include "Weapons/OFBulletShell.h"
-#include "Weapons/OFProjectile.h"
 
 AOFWeapon::AOFWeapon()
 {
@@ -35,7 +34,7 @@ AOFWeapon::AOFWeapon()
 	PickupWidget->SetupAttachment(RootComponent);
 }
 
-void AOFWeapon::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+void AOFWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AOFWeapon, WeaponState);
@@ -105,9 +104,7 @@ void AOFWeapon::Fire(const FVector& HitTarget)
 
 	if (BulletShellClass)
 	{
-		const USkeletalMeshSocket* AmmoEjectSocket = WeaponMesh->GetSocketByName(FName("AmmoEject"));
-
-		if (AmmoEjectSocket)
+		if (const USkeletalMeshSocket* AmmoEjectSocket = WeaponMesh->GetSocketByName(FName("AmmoEject")))
 		{
 			FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(GetWeaponMesh());
 			if (UWorld* World = GetWorld())
@@ -221,12 +218,9 @@ void AOFWeapon::SetWeaponState(EWeaponState State)
 			WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 			ShowPickupWidget(true);
 			break;
-		// default: break;
+		default: break;
 	}
-	
 }
-
-
 
 // On the client
 void AOFWeapon::OnRep_WeaponState()
@@ -255,11 +249,11 @@ void AOFWeapon::OnRep_WeaponState()
 			WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 			ShowPickupWidget(true);
 			break;
-		// default: break;
+		default: break;
 	}
 }
 
-bool AOFWeapon::IsEmpty()
+bool AOFWeapon::IsEmpty() const
 {
 	return Ammo <= 0;
 }
