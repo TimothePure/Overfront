@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "OFProjectile.h"
+#include "OFProjectileExplosive.h"
 #include "OFProjectileRocket.generated.h"
 
 UCLASS()
-class OVERFRONT_API AOFProjectileRocket : public AOFProjectile
+class OVERFRONT_API AOFProjectileRocket : public AOFProjectileExplosive
 {
 	GENERATED_BODY()
 
@@ -17,37 +18,14 @@ public:
 protected:
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult) override;
 	virtual void BeginPlay() override;
-	virtual void Destroyed() override;
-	
-	UPROPERTY(EditAnywhere)
-	class UNiagaraSystem* TrailSystem;
+	virtual void Explode() override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
 	USoundBase* ProjectileLoop;
-
-	UPROPERTY(EditAnywhere)
-	USoundAttenuation* LoopingSoundAttenuation;
-	
-private:
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* RocketMesh;
-	
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
-	float DamageInnerRadius = 100.f;
-
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
-	float DamageOuterRadius = 500.f;
-
-	FTimerHandle DestroyTimerHandle;
-
-	UPROPERTY(EditAnywhere)
-	float DestroyDuration = 3.f;
-
-	void DestroyTimerFinished();
-	
-	UPROPERTY()
-	class UNiagaraComponent* TrailSystemComponent;
 
 	UPROPERTY()
 	UAudioComponent* ProjectileLoopComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
+	USoundAttenuation* LoopingSoundAttenuation;
 };

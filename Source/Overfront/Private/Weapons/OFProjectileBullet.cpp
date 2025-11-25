@@ -6,19 +6,29 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "Components/BoxComponent.h"
+#include "Particles/ParticleSystem.h"
 
 AOFProjectileBullet::AOFProjectileBullet()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement Component"));
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->SetIsReplicated(true);
 }
 
+void AOFProjectileBullet::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (Tracer)
+	{
+		TracerComponent = UGameplayStatics::SpawnEmitterAttached(Tracer, CollisionBox, FName(), GetActorLocation(),
+			GetActorRotation(), EAttachLocation::KeepWorldPosition); 
+	}
+}
+
 void AOFProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse, const FHitResult& HitResult)
+                                FVector NormalImpulse, const FHitResult& HitResult)
 {
 	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
 	{

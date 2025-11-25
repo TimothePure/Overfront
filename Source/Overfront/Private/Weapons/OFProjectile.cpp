@@ -3,6 +3,7 @@
 
 #include "Weapons/OFProjectile.h"
 
+#include "NiagaraFunctionLibrary.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Overfront/Overfront.h"
@@ -26,11 +27,6 @@ AOFProjectile::AOFProjectile()
 void AOFProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (Tracer)
-	{
-		TracerComponent = UGameplayStatics::SpawnEmitterAttached(Tracer,CollisionBox,FName(), GetActorLocation(), GetActorRotation(), EAttachLocation::KeepWorldPosition); 
-	}
 
 	if (HasAuthority())
 	{

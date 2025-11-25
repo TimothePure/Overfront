@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "OFProjectile.generated.h"
 
-UCLASS()
+UCLASS(Abstract)
 class OVERFRONT_API AOFProjectile : public AActor
 {
 	GENERATED_BODY()
@@ -14,19 +14,20 @@ class OVERFRONT_API AOFProjectile : public AActor
 public:
 	AOFProjectile();
 	virtual void Destroyed() override;
+	
 protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult);
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Projectile|Damage")
 	float Damage = 20.f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
 	UParticleSystem* ImpactParticles;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
 	USoundBase* ImpactSound;
 
 	UPROPERTY(EditAnywhere)
@@ -34,11 +35,4 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* ProjectileMovementComponent;
-
-private:
-	UPROPERTY(EditAnywhere)
-	UParticleSystem* Tracer;
-
-	UPROPERTY()
-	UParticleSystemComponent* TracerComponent;
 };
