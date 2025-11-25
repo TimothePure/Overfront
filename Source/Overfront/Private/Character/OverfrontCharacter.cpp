@@ -568,6 +568,10 @@ void AOverfrontCharacter::MulticastOnEliminated_Implementation()
 	{
 		FollowCamera->PostProcessSettings.AddBlendable(GrayscaleMaterialInstance, 1.0f);
 	}
+	if (IsLocallyControlled() && CombatComponent->bAiming && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
+	{
+		ShowSniperScopeWidget(false);
+	}
 }
 
 void AOverfrontCharacter::EliminationTimerFinished()

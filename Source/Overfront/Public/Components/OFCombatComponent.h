@@ -30,6 +30,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
