@@ -4,6 +4,7 @@
 #include "Weapons/OFWeapon.h"
 
 #include "Character/OverfrontCharacter.h"
+#include "Components/OFCombatComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -179,6 +180,10 @@ void AOFWeapon::SpendAmmo()
 void AOFWeapon::OnRep_Ammo()
 {
 	SetHUDAmmo();
+	if (OwnerCharacter && OwnerCharacter->GetCombatComponent() && IsFull())
+	{
+		 OwnerCharacter->GetCombatComponent()->JumpToShotgunEnd();
+	}
 }
 
 // On the server
@@ -256,5 +261,10 @@ void AOFWeapon::OnRep_WeaponState()
 bool AOFWeapon::IsEmpty() const
 {
 	return Ammo <= 0;
+}
+
+bool AOFWeapon::IsFull() const
+{
+	return Ammo == MagCapacity;
 }
 

@@ -116,6 +116,15 @@ void UOFCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Tr
 void UOFCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeapon == nullptr || Character == nullptr) return;
+
+	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->Fire(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied;
+		return;
+	}
+
 	if (CombatState == ECombatState::ECS_Unoccupied)
 	{
 		Character->PlayFireMontage(bAiming);
@@ -126,7 +135,9 @@ void UOFCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize&
 bool UOFCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr) return false;
-	return !EquippedWeapon->IsEmpty() && !bCurrentlyFiring && CombatState != ECombatState::ECS_Reloading;
+	if (!EquippedWeapon->IsEmpty() && !bCurrentlyFiring && CombatState == ECombatState::ECS_Reloading &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;
+	return !EquippedWeapon->IsEmpty() && !bCurrentlyFiring && CombatState == ECombatState::ECS_Unoccupied;
 }
 
 #pragma endregion FiringWeapon
@@ -361,6 +372,10 @@ void UOFCombatComponent::OnRep_CarriedAmmo()
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
+	if (CombatState == ECombatState::ECS_Reloading && EquippedWeapon != nullptr && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun && CarriedAmmo == 0)
+	{
+		JumpToShotgunEnd();
+	}
 }
 
 void UOFCombatComponent::InitializeCarriedAmmo()
@@ -427,9 +442,17 @@ void UOFCombatComponent::FinishReloading()
 	}
 }
 
+void UOFCombatComponent::ShotgunShellReload()
+{
+	if (Character && Character->HasAuthority())
+	{
+		UpdateShotgunAmmoValues();
+	}
+}
+
 void UOFCombatComponent::UpdateAmmoValues()
 {
-	if (EquippedWeapon == nullptr) return;
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
 	
 	int32 ReloadAmount = AmountToReload();
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
@@ -444,6 +467,37 @@ void UOFCombatComponent::UpdateAmmoValues()
 		}
 	}
 	EquippedWeapon->AddAmmo(ReloadAmount);
+}
+
+void UOFCombatComponent::UpdateShotgunAmmoValues()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+	
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= 1;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+
+		Controller = Controller == nullptr ? Cast<AOFPlayerController>(Character->GetController()) : Controller;
+		if (Controller)
+		{
+			Controller->SetHUDCarriedAmmo(CarriedAmmo);
+		}
+	}
+	EquippedWeapon->AddAmmo(1);
+	if (EquippedWeapon->IsFull() || CarriedAmmo == 0)
+	{
+		JumpToShotgunEnd();
+	}
+}
+
+void UOFCombatComponent::JumpToShotgunEnd()
+{
+	UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+	if (AnimInstance && Character->GetReloadMontage())
+	{
+		AnimInstance->Montage_JumpToSection(FName("ShotgunEnd"));
+	}
 }
 
 #pragma endregion Ammo

@@ -9,7 +9,7 @@
 #include "Components/BoxComponent.h"
 #include "Particles/ParticleSystem.h"
 
-AOFProjectileBullet::AOFProjectileBullet()
+AOFProjectileBullet::AOFProjectileBullet() 
 {
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement Component"));
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
@@ -39,5 +39,3 @@ void AOFProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 	}
 	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, HitResult);
 }
-
-
