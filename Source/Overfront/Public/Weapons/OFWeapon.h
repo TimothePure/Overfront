@@ -66,6 +66,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Weapon|Sounds")
 	USoundBase* EquipSound;
+	
+	/** Enable or disable custom depth **/
+	void EnableCustomDepth(bool bEnable);
 
 protected:
 	virtual void BeginPlay() override;
