@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/OFPlayerController.h"
+#include "Weapons/OFProjectile.h"
 #include "Weapons/OFWeapon.h"
 #include "Widgets/OFHUD.h"
 
@@ -534,6 +535,8 @@ void UOFCombatComponent::JumpToShotgunEnd()
 
 #pragma endregion Ammo
 
+#pragma region Grenade 
+
 void UOFCombatComponent::ThrowGrenade()
 {
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
@@ -543,6 +546,8 @@ void UOFCombatComponent::ThrowGrenade()
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
+		
 		if (!Character->HasAuthority())
 		{
 			ServerThrowGrenade();
@@ -558,6 +563,7 @@ void UOFCombatComponent::ServerThrowGrenade_Implementation()
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
 }
 
@@ -566,6 +572,42 @@ void UOFCombatComponent::ThrowGrenadeFinished()
 	CombatState = ECombatState::ECS_Unoccupied;
 	AttachActorToRightHand(EquippedWeapon);
 } 
+
+void UOFCombatComponent::LaunchGrenade()
+{
+	ShowAttachedGrenade(false);
+	if (Character && Character->IsLocallyControlled())
+	{
+		ServerLaunchGrenade(Target);
+	}
+}
+
+void UOFCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& HitTarget)
+{
+	if (Character && GrenadeClass && Character->GetAttachedGrenade())
+	{
+		const FVector StartingLocation = Character->GetAttachedGrenade()->GetComponentLocation();
+		FVector ToTarget = HitTarget - StartingLocation;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = Character;
+		SpawnParams.Instigator = Character;
+		
+		if (UWorld* World = GetWorld())
+		{
+			World->SpawnActor<AOFProjectile>(GrenadeClass, StartingLocation, ToTarget.Rotation(), SpawnParams);
+		}
+	}
+}
+
+void UOFCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
+{
+	if (Character && Character->GetAttachedGrenade())
+	{
+		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
+	}
+}
+
+#pragma endregion Grenade
 
 void UOFCombatComponent::OnRep_CombatState()
 {
@@ -585,6 +627,7 @@ void UOFCombatComponent::OnRep_CombatState()
 			{
 				Character->PlayThrowGrenadeMontage();
 				AttachActorToLeftHand(EquippedWeapon);
+				ShowAttachedGrenade(true);
 			}
 			break;
 		default: break;

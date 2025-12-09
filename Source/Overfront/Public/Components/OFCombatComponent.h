@@ -12,6 +12,7 @@
 
 #define CAMERA_IGNORE_DISTANCE = 350.f;
 
+class AOFProjectile;
 class AOFWeapon;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -37,6 +38,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ThrowGrenadeFinished();
+	
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize& HitTarget);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -72,6 +79,9 @@ protected:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AOFProjectile> GrenadeClass;
 	
 	void DroppedEquippedWeapon();
 	void AttachActorToRightHand(AActor* ActorToAttach);
@@ -170,4 +180,5 @@ private:
 
 	void UpdateAmmoValues();
 	void UpdateShotgunAmmoValues();
+	void ShowAttachedGrenade(bool bShowGrenade);
 };

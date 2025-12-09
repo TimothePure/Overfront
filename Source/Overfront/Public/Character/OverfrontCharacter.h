@@ -217,8 +217,9 @@ private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
 	UMaterialInstance* GrayscaleMaterialInstance;
 
-	/** Carrying Ammo **/
-
+	/** Grenade **/
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
+	UStaticMeshComponent* AttachedGrenade;
 public:
 	/** Getters and Setters **/
 	void SetOverlappingWeapon(AOFWeapon* Weapon);
@@ -238,4 +239,5 @@ public:
 	ECombatState GetCombatState() const;
 	FORCEINLINE UOFCombatComponent* GetCombatComponent() const { return CombatComponent; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
+	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 };
