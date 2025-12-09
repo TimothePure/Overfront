@@ -35,6 +35,9 @@ public:
 	void ShotgunShellReload();
 	void JumpToShotgunEnd();
 
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeFinished();
+	
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -64,6 +67,18 @@ protected:
 	void ServerReload();
 	void HandleReload();
 	int32 AmountToReload();
+	
+	void ThrowGrenade();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
+	
+	void DroppedEquippedWeapon();
+	void AttachActorToRightHand(AActor* ActorToAttach);
+	void AttachActorToLeftHand(AActor* ActorToAttach);
+	void UpdateCarriedAmmo();
+	void PlayEquipWeaponSound();
+	void ReloadWeaponIfEmpty();
 private:
 	class AOverfrontCharacter* Character;
 	class AOFPlayerController* Controller;

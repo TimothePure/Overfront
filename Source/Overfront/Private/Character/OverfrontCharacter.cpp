@@ -92,6 +92,7 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &AOverfrontCharacter::FireInputStart);
         EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::FireInputEnd);
         EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::ReloadInput);
+        EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::ThrowGrenadeInput);
 	}
 }
 
@@ -306,6 +307,14 @@ void AOverfrontCharacter::ReloadInput(const FInputActionValue& Value)
 	if (CombatComponent)
 	{
 		CombatComponent->Reload();
+	}
+}
+
+void AOverfrontCharacter::ThrowGrenadeInput(const FInputActionValue& Value)
+{
+	if (CombatComponent)
+	{
+		CombatComponent->ThrowGrenade();
 	}
 }
 
@@ -526,8 +535,17 @@ void AOverfrontCharacter::PlayReloadMontage()
 	}
 }
 
+void AOverfrontCharacter::PlayThrowGrenadeMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ThrowGrenadeMontage)
+	{
+		AnimInstance->Montage_Play(ThrowGrenadeMontage);
+	}
+}
+
 void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
-	AController* InstigatorController, AActor* DamageCauser)
+                                        AController* InstigatorController, AActor* DamageCauser)
 {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	if (IsLocallyControlled())

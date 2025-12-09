@@ -60,6 +60,10 @@ class OVERFRONT_API AOverfrontCharacter : public ACharacter, public IOFInteractW
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* ReloadAction;
 	
+	/** Throw Grenade Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* ThrowGrenadeAction;
+	
 public:
 	AOverfrontCharacter();
 	virtual void Tick(float DeltaTime) override;
@@ -68,6 +72,8 @@ public:
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
 	void PlayReloadMontage();
+	
+	void PlayThrowGrenadeMontage();
 
 	virtual void OnRep_ReplicatedMovement() override;
 
@@ -117,6 +123,9 @@ protected:
 
 	/** Reload **/
 	void ReloadInput(const FInputActionValue& Value);
+	
+	/** Throw Grenade **/
+	void ThrowGrenadeInput(const FInputActionValue& Value);
 	
 	void SimProxiesTurn();
 	void PlayHitReactMontage();
@@ -168,6 +177,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimMontage* ReloadMontage;
+	
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	UAnimMontage* ThrowGrenadeMontage;
 
 	/** Hiding Character from Camera **/
 	void HideCharacterIfCameraClose();
