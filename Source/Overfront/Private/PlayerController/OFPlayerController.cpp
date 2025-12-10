@@ -263,6 +263,21 @@ void AOFPlayerController::SetHUDScoreboard(const TArray<FScoreboardEntry>& Score
     }
 }
 
+void AOFPlayerController::SetHUDGrenades(int32 Grenades)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+    
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->GrenadesAmount)
+    {
+        FString GrenadesText = FString::Printf(TEXT("%d"), Grenades);
+        HUD->CharacterOverlay->GrenadesAmount->SetText(FText::FromString(GrenadesText));
+    } else
+    {
+        PendingHUDData.bPendingData = true;
+        PendingHUDData.Grenades = Grenades;
+    }
+}
+
 void AOFPlayerController::SetHUDTime()
 {
     float TimeLeft = 0.f;
@@ -333,6 +348,7 @@ void AOFPlayerController::InitHUDOverlay()
         SetHUDHealth(PendingHUDData.Health, PendingHUDData.MaxHealth);
         SetHUDScore(PendingHUDData.Score);
         SetHUDDefeats(PendingHUDData.Defeats);
+        SetHUDGrenades(PendingHUDData.Grenades);
         PendingHUDData = FPendingHUDData();
     }
 }

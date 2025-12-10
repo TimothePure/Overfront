@@ -30,6 +30,7 @@ void UOFCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	DOREPLIFETIME(UOFCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UOFCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UOFCombatComponent, CombatState);
+	DOREPLIFETIME(UOFCombatComponent, Grenades);
 }
 
 void UOFCombatComponent::BeginPlay()
@@ -48,7 +49,8 @@ void UOFCombatComponent::BeginPlay()
 			InitializeCarriedAmmo();
 		}
 	}
-}
+	UpdateHUDGrenades();
+}  
 
 void UOFCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -539,7 +541,7 @@ void UOFCombatComponent::JumpToShotgunEnd()
 
 void UOFCombatComponent::ThrowGrenade()
 {
-	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	if (Grenades == 0 || CombatState != ECombatState::ECS_Unoccupied) return;
 	
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	if (Character)
@@ -551,6 +553,10 @@ void UOFCombatComponent::ThrowGrenade()
 		if (!Character->HasAuthority())
 		{
 			ServerThrowGrenade();
+		} else
+		{
+			Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+			UpdateHUDGrenades();
 		}
 	}
 		
@@ -558,12 +564,16 @@ void UOFCombatComponent::ThrowGrenade()
 
 void UOFCombatComponent::ServerThrowGrenade_Implementation()
 {
+	if (Grenades == 0) return; 
+	
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
 		ShowAttachedGrenade(true);
+		Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+		UpdateHUDGrenades();
 	}
 }
 
@@ -599,12 +609,26 @@ void UOFCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQua
 	}
 }
 
+void UOFCombatComponent::UpdateHUDGrenades()
+{
+	Controller = Controller == nullptr ? Cast<AOFPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDGrenades(Grenades);
+	}
+}
+
 void UOFCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
 {
 	if (Character && Character->GetAttachedGrenade())
 	{
 		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
 	}
+}
+
+void UOFCombatComponent::OnRep_Grenades()
+{
+	UpdateHUDGrenades();
 }
 
 #pragma endregion Grenade

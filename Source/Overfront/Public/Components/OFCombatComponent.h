@@ -89,6 +89,7 @@ protected:
 	void UpdateCarriedAmmo();
 	void PlayEquipWeaponSound();
 	void ReloadWeaponIfEmpty();
+
 private:
 	class AOverfrontCharacter* Character;
 	class AOFPlayerController* Controller;
@@ -181,4 +182,15 @@ private:
 	void UpdateAmmoValues();
 	void UpdateShotgunAmmoValues();
 	void ShowAttachedGrenade(bool bShowGrenade);
+	
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 4;
+	
+	UFUNCTION()
+	void OnRep_Grenades();
+	
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	int32 MaxGrenades = 4;
+	
+	void UpdateHUDGrenades();
 };

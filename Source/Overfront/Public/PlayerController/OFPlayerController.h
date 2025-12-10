@@ -18,6 +18,7 @@ struct FPendingHUDData
 	float MaxHealth;
 	float Score = 0.f;
 	int32 Defeats = 0;
+	int32 Grenades = 0;
 };
 
 /**
@@ -53,6 +54,7 @@ public:
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 	void SetHUDScoreboard(const TArray<struct FScoreboardEntry>& Scoreboard);
+	void SetHUDGrenades(int32 Grenades);
 	
 	UFUNCTION(Client, Reliable)
 	void Client_OnEliminated(float RespawnDelay, const FString& KillerName);

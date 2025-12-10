@@ -53,6 +53,9 @@ public:
 	class UOFScoreboardWidget* ScoreboardWidget;
 
 	void BlinkCountdown();
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* GrenadesAmount;
 
 private:
 	float Health;
