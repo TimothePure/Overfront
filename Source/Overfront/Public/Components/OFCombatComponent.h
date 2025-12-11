@@ -45,6 +45,8 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize& HitTarget);
 	
+	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
+	
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -149,6 +151,9 @@ private:
 	void OnRep_CarriedAmmo();
 
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+	
+	UPROPERTY(EditAnywhere)
+	TMap<EWeaponType, int32> MaxCarriedAmmoMap;
 
 	UPROPERTY(EditAnywhere, Category = "Ammo")
 	int32 StartingARAmmo = 30;
@@ -172,6 +177,7 @@ private:
 	int32 StartingGrenadeLauncherAmmo = 4;
 
 	void InitializeCarriedAmmo();
+	void InitializeMaxCarriedAmmo();
 
 	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState = ECombatState::ECS_Unoccupied;

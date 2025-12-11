@@ -21,6 +21,9 @@ UOFCombatComponent::UOFCombatComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	BaseWalkSpeed = 600.0f;
 	AimWalkSpeed = 400.0f;
+	
+	// To fill the MaxCarriedAmmo TMap for being able to adjust it from the editor
+	InitializeMaxCarriedAmmo();
 }
 
 void UOFCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -31,6 +34,19 @@ void UOFCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	DOREPLIFETIME_CONDITION(UOFCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UOFCombatComponent, CombatState);
 	DOREPLIFETIME(UOFCombatComponent, Grenades);
+}
+
+void UOFCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
+{
+	if (CarriedAmmoMap.Contains(WeaponType))
+	{
+		CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmoMap[WeaponType]);
+		UpdateCarriedAmmo();
+	}
+	if (EquippedWeapon && EquippedWeapon->IsEmpty() && EquippedWeapon->GetWeaponType() == WeaponType)
+	{
+		Reload();
+	}
 }
 
 void UOFCombatComponent::BeginPlay()
@@ -422,6 +438,17 @@ void UOFCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, StartingShotgunAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, StartingSniperAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, StartingGrenadeLauncherAmmo);
+}
+
+void UOFCombatComponent::InitializeMaxCarriedAmmo()
+{
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, 200);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, 20);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, 120);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SubmachineGun, 200);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, 60);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, 80);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, 60);
 }
 
 void UOFCombatComponent::Reload()
