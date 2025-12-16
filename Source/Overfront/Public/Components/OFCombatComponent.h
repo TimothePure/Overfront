@@ -57,7 +57,6 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 	
-
 	void FireInput(bool bPressed);
 
 	void Fire();

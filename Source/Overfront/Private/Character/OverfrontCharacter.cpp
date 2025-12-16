@@ -9,6 +9,7 @@
 #include "InputActionValue.h"
 #include "Character/OFAnimInstance.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/OFBuffComponent.h"
 #include "Components/OFCombatComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -44,6 +45,9 @@ AOverfrontCharacter::AOverfrontCharacter()
 
 	CombatComponent = CreateDefaultSubobject<UOFCombatComponent>(TEXT("CombatComponent"));
 	CombatComponent->SetIsReplicated(true);
+	
+	BuffComponent = CreateDefaultSubobject<UOFBuffComponent>(TEXT("BuffComponent"));
+	BuffComponent->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -74,6 +78,10 @@ void AOverfrontCharacter::PostInitializeComponents()
 	if (CombatComponent)
 	{
 		CombatComponent->Character = this;
+	}
+	if (BuffComponent)
+	{
+		BuffComponent->Character = this;
 	}
 }
 
@@ -613,13 +621,17 @@ void AOverfrontCharacter::EliminationTimerFinished()
 
 #pragma region PlayerStats
 
-void AOverfrontCharacter::OnRep_Health()
+void AOverfrontCharacter::OnRep_Health(float LastHealth)
 {
 	if (IsLocallyControlled())
 	{
 		UpdateHUDHealth();
 	}
-	PlayHitReactMontage();
+	
+	if (Health < LastHealth)
+	{
+		PlayHitReactMontage();
+	}
 }
 
 void AOverfrontCharacter::UpdateHUDHealth()
