@@ -1,21 +1,18 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Pickups/OFHealthPickup.h"
+#include "Pickups/OFSpeedPickup.h"
 
-#include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
 #include "Character/OverfrontCharacter.h"
 #include "Components/OFBuffComponent.h"
 
 
-AOFHealthPickup::AOFHealthPickup()
+AOFSpeedPickup::AOFSpeedPickup()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;
 }
 
-void AOFHealthPickup::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+void AOFSpeedPickup::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnSphereOverlapBegin(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
@@ -23,7 +20,7 @@ void AOFHealthPickup::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedCompon
 	{
 		if (UOFBuffComponent* BuffComponent = Character->GetBuffComponent())
 		{
-			BuffComponent->Heal(100.f, 3.f);
+			BuffComponent->StartSpeedBuff(BaseSpeedBuff, CrouchSpeedBuff, BuffDuration);
 		}
 	}
 	Destroy();

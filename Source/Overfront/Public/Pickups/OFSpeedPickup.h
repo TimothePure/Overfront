@@ -4,23 +4,27 @@
 
 #include "CoreMinimal.h"
 #include "OFPickup.h"
-#include "OFHealthPickup.generated.h"
+#include "OFSpeedPickup.generated.h"
 
 UCLASS()
-class OVERFRONT_API AOFHealthPickup : public AOFPickup
+class OVERFRONT_API AOFSpeedPickup : public AOFPickup
 {
 	GENERATED_BODY()
 
 public:
-	AOFHealthPickup();
+	AOFSpeedPickup();
+	
 protected:
 	virtual void OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-
+	
 private:
 	UPROPERTY(EditAnywhere)
-	float HealAmount = 100.f;
+	float BaseSpeedBuff = 1600.f;
 	
 	UPROPERTY(EditAnywhere)
-	float HealingDuration = 5.f;
+	float CrouchSpeedBuff = 800.f;
+	
+	UPROPERTY(EditAnywhere)
+	float BuffDuration = 30.f; 
 };

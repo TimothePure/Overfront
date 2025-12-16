@@ -4,11 +4,23 @@
 #include "Components/OFBuffComponent.h"
 
 #include "Character/OverfrontCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 UOFBuffComponent::UOFBuffComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+}
+
+void UOFBuffComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UOFBuffComponent::SetInitialSpeeds(float BaseSpeed, float CrouchSpeed)
+{
+	InitialSpeed = BaseSpeed;
+	InitialCrouchSpeed = CrouchSpeed;
 }
 
 void UOFBuffComponent::Heal(float HealAmount, float HealingDuration, float TickRate)
@@ -23,14 +35,7 @@ void UOFBuffComponent::Heal(float HealAmount, float HealingDuration, float TickR
 
 	HealAmountPerTick = HealAmount / TickCount;
 
-	// Start timer
-	GetWorld()->GetTimerManager().SetTimer(
-		HealTimerHandle,
-		this,
-		&UOFBuffComponent::ApplyHealingTick,
-		TickRate,
-		true
-	);
+	GetWorld()->GetTimerManager().SetTimer(HealTimerHandle, this, &UOFBuffComponent::ApplyHealingTick, TickRate, true);
 }
 
 void UOFBuffComponent::ApplyHealingTick()
@@ -56,7 +61,34 @@ void UOFBuffComponent::StopHealing()
 	}
 }
 
-void UOFBuffComponent::BeginPlay()
+void UOFBuffComponent::StartSpeedBuff(float BaseSpeed, float CrouchSpeed, float Duration)
 {
-	Super::BeginPlay();
+	if (Character->GetCharacterMovement())
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+	}
+	MulticastSpeedBuff(BaseSpeed, CrouchSpeed);
+	GetWorld()->GetTimerManager().SetTimer(SpeedBuffTimerHandle, this, &UOFBuffComponent::SpeedBuffFinished, Duration, true);
 }
+
+void UOFBuffComponent::SpeedBuffFinished()
+{
+	if (Character->GetCharacterMovement())
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = InitialSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = InitialCrouchSpeed;
+	}
+	MulticastSpeedBuff(InitialSpeed, InitialCrouchSpeed);
+}
+
+void UOFBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float CrouchSpeed)
+{
+	if (Character->GetCharacterMovement())
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+	}
+}
+
+
