@@ -335,9 +335,7 @@ void AOFPlayerController::TimerSyncUpdate()
 {
     if (IsLocalController())
     {
-        UE_LOG(LogTemp, Display, TEXT("AOFPlayerController::TimerSyncUpdate"));
         ServerRequestPlayerTime(GetWorld()->GetTimeSeconds());
-        UE_LOG(LogTemp, Display, TEXT("%f"), ClientServerDelta);
     }
 }
 

@@ -23,13 +23,18 @@ void UOFBuffComponent::SetInitialSpeeds(float BaseSpeed, float CrouchSpeed)
 	InitialCrouchSpeed = CrouchSpeed;
 }
 
+void UOFBuffComponent::SetInitialJumpVelocity(float JumpZVelocity)
+{
+	InitialJumpVelocity = JumpZVelocity;
+}
+
 void UOFBuffComponent::Heal(float HealAmount, float HealingDuration, float TickRate)
 {
 	StopHealing();
 	
 	HealAmountTotal = HealAmount;
-	HealDuration    = HealingDuration;
-	HealTickRate    = TickRate;
+	HealDuration = HealingDuration;
+	HealTickRate = TickRate;
 
 	const float TickCount = HealingDuration / TickRate;
 
@@ -63,32 +68,51 @@ void UOFBuffComponent::StopHealing()
 
 void UOFBuffComponent::StartSpeedBuff(float BaseSpeed, float CrouchSpeed, float Duration)
 {
-	if (Character->GetCharacterMovement())
-	{
-		Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
-	}
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
+	
+	Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
 	MulticastSpeedBuff(BaseSpeed, CrouchSpeed);
 	GetWorld()->GetTimerManager().SetTimer(SpeedBuffTimerHandle, this, &UOFBuffComponent::SpeedBuffFinished, Duration, true);
 }
 
 void UOFBuffComponent::SpeedBuffFinished()
 {
-	if (Character->GetCharacterMovement())
-	{
-		Character->GetCharacterMovement()->MaxWalkSpeed = InitialSpeed;
-		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = InitialCrouchSpeed;
-	}
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
+	
+	Character->GetCharacterMovement()->MaxWalkSpeed = InitialSpeed;
+	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = InitialCrouchSpeed;
 	MulticastSpeedBuff(InitialSpeed, InitialCrouchSpeed);
 }
 
 void UOFBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float CrouchSpeed)
 {
-	if (Character->GetCharacterMovement())
-	{
-		Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
-	}
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
+	
+	Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
 }
 
+void UOFBuffComponent::StartJumpBuff(float JumpZVelocity, float Duration)
+{
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
+	
+	Character->GetCharacterMovement()->JumpZVelocity = JumpZVelocity;
+	MulticastJumpBuff(JumpZVelocity);
+	GetWorld()->GetTimerManager().SetTimer(JumpBuffTimerHandle, this, &UOFBuffComponent::JumpBuffFinished, Duration, true);
+}
 
+void UOFBuffComponent::JumpBuffFinished()
+{
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
+	
+	Character->GetCharacterMovement()->JumpZVelocity = InitialJumpVelocity;
+	MulticastJumpBuff(InitialJumpVelocity);
+}
+
+void UOFBuffComponent::MulticastJumpBuff_Implementation(float JumpVelocity)
+{
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
+	
+	Character->GetCharacterMovement()->JumpZVelocity = JumpVelocity;
+}
