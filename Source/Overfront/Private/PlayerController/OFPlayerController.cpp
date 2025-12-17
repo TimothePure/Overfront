@@ -50,6 +50,7 @@ void AOFPlayerController::OnPossess(APawn* InPawn)
     if (OverfrontCharacter)
     {
         SetHUDHealth(OverfrontCharacter->GetHealth(), OverfrontCharacter->GetMaxHealth()); 
+        SetHUDShield(OverfrontCharacter->GetShield(), OverfrontCharacter->GetMaxShield());
     }
 }
 
@@ -122,6 +123,25 @@ void AOFPlayerController::SetHUDHealth(float Health, float MaxHealth)
         PendingHUDData.bPendingData = true;
         PendingHUDData.Health = Health;
         PendingHUDData.MaxHealth = MaxHealth;
+    }
+}
+
+void AOFPlayerController::SetHUDShield(float Shield, float MaxShield)
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->ShieldBar && HUD->CharacterOverlay->ShieldText)
+    {
+        HUD->CharacterOverlay->SetShield(Shield, MaxShield);
+        // const float ShieldPercent = Shield / MaxShield;
+        // HUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+        // FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+        // HUD->CharacterOverlay->ShieldText->SetText(FText::FromString(HealthText));
+    } else
+    {
+        PendingHUDData.bPendingData = true;
+        PendingHUDData.Shield = Shield;
+        PendingHUDData.MaxShield = MaxShield;
     }
 }
 
@@ -344,6 +364,7 @@ void AOFPlayerController::InitHUDOverlay()
     if (PendingHUDData.bPendingData)
     {
         SetHUDHealth(PendingHUDData.Health, PendingHUDData.MaxHealth);
+        SetHUDShield(PendingHUDData.Shield, PendingHUDData.MaxShield);
         SetHUDScore(PendingHUDData.Score);
         SetHUDDefeats(PendingHUDData.Defeats);
         SetHUDGrenades(PendingHUDData.Grenades);

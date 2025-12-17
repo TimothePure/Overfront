@@ -10,8 +10,8 @@
 
 void UOFCharacterOverlay::SetHealth(float NewHealth, float NewMaxHealth)
 {
-	this->Health = NewHealth;
-	this->MaxHealth = NewMaxHealth;
+	Health = NewHealth;
+	MaxHealth = NewMaxHealth;
 	const float HealthPercent = Health / MaxHealth;
 
 	// Health Bar
@@ -23,6 +23,20 @@ void UOFCharacterOverlay::SetHealth(float NewHealth, float NewMaxHealth)
 
 	// Blood Overlay
 	BloodOverlayImage->SetOpacity(MaxBloodOpacity * (1 - HealthPercent));
+}
+
+void UOFCharacterOverlay::SetShield(float NewShield, float NewMaxShield)
+{
+	Shield = NewShield;
+	MaxShield = NewMaxShield;
+	const float ShieldPercent = Shield / MaxShield;
+
+	// Health Bar
+	ShieldBar->SetPercent(ShieldPercent);
+
+	// Health Text
+	FString Text = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+	ShieldText->SetText(FText::FromString(Text));
 }
 
 void UOFCharacterOverlay::SetWeaponHUDVisibility(bool bVisible)

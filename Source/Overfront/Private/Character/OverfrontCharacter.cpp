@@ -70,6 +70,7 @@ void AOverfrontCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME_CONDITION(AOverfrontCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AOverfrontCharacter, Health);
+	DOREPLIFETIME(AOverfrontCharacter, Shield);
 }
 
 void AOverfrontCharacter::PostInitializeComponents()
@@ -121,6 +122,8 @@ void AOverfrontCharacter::BeginPlay()
 	}
 	
 	UpdateHUDHealth();
+	UpdateHUDShield();
+	
 	if (OFPlayerController)
 	{
 		OFPlayerController->SetWeaponHUDVisibility(false);
@@ -565,10 +568,24 @@ void AOverfrontCharacter::PlayThrowGrenadeMontage()
 void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
                                         AController* InstigatorController, AActor* DamageCauser)
 {
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	float DamageRemaining = Damage;
+	
+	if (Shield > 0.f)
+	{
+		const float ShieldDamage = FMath::Min(Shield, DamageRemaining);
+		Shield = FMath::Clamp(Shield - ShieldDamage, 0.f, MaxShield);
+		DamageRemaining -= ShieldDamage;
+	}
+	
+	if (DamageRemaining > 0.f)
+	{
+		Health = FMath::Clamp(Health - DamageRemaining, 0.f, MaxHealth);
+	}
+	
 	if (IsLocallyControlled())
 	{
 		UpdateHUDHealth();
+		UpdateHUDShield();
 	}
 	PlayHitReactMontage();
 
@@ -636,12 +653,34 @@ void AOverfrontCharacter::OnRep_Health(float LastHealth)
 	}
 }
 
+void AOverfrontCharacter::OnRep_Shield(float LastShield)
+{
+	if (IsLocallyControlled())
+	{
+		UpdateHUDShield();
+	}
+	
+	if (Shield < LastShield)
+	{
+		PlayHitReactMontage();
+	}
+}
+
 void AOverfrontCharacter::UpdateHUDHealth()
 {
 	OFPlayerController = OFPlayerController == nullptr ? Cast<AOFPlayerController>(GetController()) : OFPlayerController;
 	if (OFPlayerController)
 	{
 		OFPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void AOverfrontCharacter::UpdateHUDShield()
+{
+	OFPlayerController = OFPlayerController == nullptr ? Cast<AOFPlayerController>(GetController()) : OFPlayerController;
+	if (OFPlayerController)
+	{
+		OFPlayerController->SetHUDShield(Shield, MaxShield);
 	}
 }
 

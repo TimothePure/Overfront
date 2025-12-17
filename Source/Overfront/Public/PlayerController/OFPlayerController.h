@@ -16,6 +16,8 @@ struct FPendingHUDData
 	bool bPendingData = false;
 	float Health;
 	float MaxHealth;
+	float Shield;
+	float MaxShield;
 	float Score = 0.f;
 	int32 Defeats = 0;
 	int32 Grenades = 0;
@@ -45,6 +47,7 @@ public:
 
 	/** HUD Updates Functions **/
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDShield(float Shield, float MaxShield);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDWeaponAmmo(int32 Ammo);
