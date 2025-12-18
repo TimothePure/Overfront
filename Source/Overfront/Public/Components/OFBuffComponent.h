@@ -17,6 +17,7 @@ public:
 	friend class AOverfrontCharacter;
 	
 	void Heal(float HealAmount, float HealingDuration, float TickRate = 0.1f);
+	void ReplenishShield(float ShieldAmount, float Duration, float TickRate = 0.1f);
 	void StartSpeedBuff(float BaseSpeed, float CrouchSpeed, float Duration);
 	void StartJumpBuff(float JumpZVelocity, float Duration);
 	
@@ -38,6 +39,17 @@ private:
 
 	void ApplyHealingTick();
 	void StopHealing();
+	
+	/** Shield Buff **/
+	
+	FTimerHandle ShieldTimerHandle;
+	float ShieldAmountTotal = 0.f;
+	float ShieldDuration = 0.f;
+	float ShieldTickRate = 0.1f;
+	float ShieldAmountPerTick = 0.f;
+
+	void ApplyShieldTick();
+	void StopReplenishShield();
 	
 	/** Speed Buff **/
 	

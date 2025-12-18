@@ -66,6 +66,44 @@ void UOFBuffComponent::StopHealing()
 	}
 }
 
+void UOFBuffComponent::ReplenishShield(float ShieldAmount, float Duration, float TickRate)
+{
+	StopReplenishShield();
+	
+	ShieldAmountTotal = ShieldAmount;
+	ShieldDuration = Duration;
+	ShieldTickRate = TickRate;
+
+	const float TickCount = ShieldDuration / TickRate;
+
+	ShieldAmountPerTick = ShieldAmount / TickCount;
+
+	GetWorld()->GetTimerManager().SetTimer(ShieldTimerHandle, this, &UOFBuffComponent::ApplyShieldTick, TickRate, true);
+}
+
+void UOFBuffComponent::ApplyShieldTick()
+{
+	if (Character == nullptr) return;
+	Character->SetShield(FMath::Clamp(Character->GetShield() + ShieldAmountPerTick, 0.f, Character->GetMaxShield()));
+
+	ShieldAmountTotal -= ShieldAmountPerTick;
+	Character->UpdateHUDShield();
+
+	if (ShieldAmountTotal <= 0.f || Character->GetShield() >= Character->GetMaxShield())
+	{
+		ShieldAmountTotal = 0.f;
+		StopReplenishShield();
+	}
+}
+
+void UOFBuffComponent::StopReplenishShield()
+{
+	if (GetWorld()->GetTimerManager().IsTimerActive(ShieldTimerHandle))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ShieldTimerHandle);
+	}
+}
+
 void UOFBuffComponent::StartSpeedBuff(float BaseSpeed, float CrouchSpeed, float Duration)
 {
 	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
