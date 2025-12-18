@@ -110,10 +110,25 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	}
 }
 
+void AOverfrontCharacter::SpawnDefaultWeapon()
+{
+	AOverfrontGameMode* GameMode = Cast<AOverfrontGameMode>(UGameplayStatics::GetGameMode(this));
+	UWorld* World = GetWorld();
+	if (GameMode && World && DefaultWeaponClass && !bIsEliminated)
+	{
+		AOFWeapon* StartingWeapon = World->SpawnActor<AOFWeapon>(DefaultWeaponClass);
+		if (CombatComponent)
+		{
+			CombatComponent->EquipWeapon(StartingWeapon);
+			StartingWeapon->bDestroyWeapon = true;
+		}
+	}
+}
+
 void AOverfrontCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	// Called inside BeginPlay and Controller->OnRep_PlayerState to ensure that the HUD is setup correctly
 	if (AOFPlayerState* PS = GetPlayerState<AOFPlayerState>())
 	{
@@ -138,6 +153,8 @@ void AOverfrontCharacter::BeginPlay()
 	{
 		AttachedGrenade->SetVisibility(false);
 	}
+	
+	SpawnDefaultWeapon();
 }
 
 void AOverfrontCharacter::Destroyed()
@@ -604,7 +621,13 @@ void AOverfrontCharacter::OnEliminated(float Delay)
 {
 	if (CombatComponent && CombatComponent->EquippedWeapon)
 	{
-		CombatComponent->EquippedWeapon->Dropped();
+		if (CombatComponent->EquippedWeapon->bDestroyWeapon)
+		{
+			CombatComponent->EquippedWeapon->Destroy();
+		} else
+		{
+			CombatComponent->EquippedWeapon->Dropped();
+		}
 	}
 	MulticastOnEliminated();
 	GetWorldTimerManager().SetTimer(EliminationTimerHandle, this, &ThisClass::EliminationTimerFinished, Delay);

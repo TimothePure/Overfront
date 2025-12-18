@@ -88,6 +88,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
+	void SpawnDefaultWeapon();
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
@@ -234,6 +235,10 @@ private:
 	/** Grenade **/
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = true))
 	UStaticMeshComponent* AttachedGrenade;
+	
+	/** Default Weapon **/
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AOFWeapon> DefaultWeaponClass;
 public:
 	/** Getters and Setters **/
 	void SetOverlappingWeapon(AOFWeapon* Weapon);
