@@ -59,7 +59,7 @@ void AOFPickup::BeginPlay()
 	Super::BeginPlay();
 	if (HasAuthority())
 	{
-		OverlapSphere->OnComponentBeginOverlap.AddDynamic(this, &AOFPickup::OnSphereOverlapBegin);
+		GetWorldTimerManager().SetTimer(BindOverlapTimerHandle, this, &AOFPickup::BindOverlapFinished, BindOverlapDuration);
 	}
 }
 
@@ -67,5 +67,10 @@ void AOFPickup::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	
+}
+
+void AOFPickup::BindOverlapFinished()
+{
+	OverlapSphere->OnComponentBeginOverlap.AddDynamic(this, &AOFPickup::OnSphereOverlapBegin);
 }
 
