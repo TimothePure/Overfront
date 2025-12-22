@@ -80,6 +80,7 @@ void UOFCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 		SetHUDCrosshair(DeltaTime);
 		InterpFOV(DeltaTime);
+		UpdateRecoil(DeltaTime);
 	}
 }
 
@@ -104,6 +105,7 @@ void UOFCombatComponent::Fire()
 		ServerFire(Target);
 		CrosshairShootingFactor = 0.75f;
 		StartFireTimer();
+		ApplyRecoil();
 	}
 }
 
@@ -659,6 +661,24 @@ void UOFCombatComponent::OnRep_Grenades()
 }
 
 #pragma endregion Grenade
+
+void UOFCombatComponent::ApplyRecoil()
+{
+	if (!Character || !EquippedWeapon) return;
+
+	RecoilVelocity += EquippedWeapon->RecoilImpulse;
+}
+
+void UOFCombatComponent::UpdateRecoil(float DeltaTime)
+{
+	if (!Character || !Character->IsLocallyControlled() || !EquippedWeapon) return;
+
+	const float Stiffness = EquippedWeapon->RecoilSpringStrength;
+	const float Damping   = EquippedWeapon->RecoilDamping;
+
+	RecoilVelocity += (-RecoilOffset * Stiffness - RecoilVelocity * Damping) * DeltaTime;
+	RecoilOffset += RecoilVelocity * DeltaTime;
+ }
 
 void UOFCombatComponent::OnRep_CombatState()
 {

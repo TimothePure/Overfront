@@ -275,6 +275,18 @@ void AOverfrontCharacter::DoJumpEnd()
 	StopJumping();
 }
 
+FRotator AOverfrontCharacter::GetViewRotation() const
+{
+	FRotator View = Super::GetViewRotation();
+
+	if (CombatComponent)
+	{
+		View.Pitch += CombatComponent->GetRecoilOffset();
+	}
+
+	return View;
+}
+
 void AOverfrontCharacter::OnRep_ReplicatedMovement()
 {
 	Super::OnRep_ReplicatedMovement();

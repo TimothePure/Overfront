@@ -91,6 +91,9 @@ protected:
 	void PlayEquipWeaponSound();
 	void ReloadWeaponIfEmpty();
 
+	void ApplyRecoil();
+	void UpdateRecoil(float DeltaTime);
+
 private:
 	class AOverfrontCharacter* Character;
 	class AOFPlayerController* Controller;
@@ -198,4 +201,11 @@ private:
 	int32 MaxGrenades = 4;
 	
 	void UpdateHUDGrenades();
+
+	float RecoilOffset = 0.f;
+
+	float RecoilVelocity = 0.f;
+	
+public:
+	FORCEINLINE float GetRecoilOffset() const { return RecoilOffset; }
 };

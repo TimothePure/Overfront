@@ -36,7 +36,7 @@ public:
 
 	// Textures for the weapon crosshairs
 	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshair")
-	 UTexture2D* CrosshairCenter;
+	UTexture2D* CrosshairCenter;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshair")
 	UTexture2D* CrosshairLeft;
@@ -72,6 +72,15 @@ public:
 	
 	bool bDestroyWeapon = false;
 
+	UPROPERTY(EditAnywhere, Category = "Weapon|Recoil")
+	float RecoilSpringStrength = 90.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon|Recoil")
+	float RecoilDamping = 18.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon|Recoil")
+	float RecoilImpulse = 45.f;
+	
 protected:
 	virtual void BeginPlay() override;
 

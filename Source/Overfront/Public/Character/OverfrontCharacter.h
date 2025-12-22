@@ -98,6 +98,8 @@ protected:
 	virtual void DoJumpStart();
 	virtual void DoJumpEnd();
 
+	virtual FRotator GetViewRotation() const override;
+
 	/** Movement **/
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
