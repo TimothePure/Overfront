@@ -27,6 +27,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void EquipWeapon(AOFWeapon* WeaponToEquip);
+	void SwapWeapons();
 	void Reload();
 
 	UFUNCTION(BlueprintCallable)
@@ -56,6 +57,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+
+	UFUNCTION()
+	void OnRep_SecondaryWeapon();
 	
 	void FireInput(bool bPressed);
 
@@ -85,12 +89,18 @@ protected:
 	TSubclassOf<AOFProjectile> GrenadeClass;
 	
 	void DroppedEquippedWeapon();
+	void EquipPrimaryWeapon(AOFWeapon* WeaponToEquip);
+	void EquipSecondaryWeapon(AOFWeapon* WeaponToEquip);
+	
 	void AttachActorToRightHand(AActor* ActorToAttach);
 	void AttachActorToLeftHand(AActor* ActorToAttach);
+	void AttachActorToBack(AActor* ActorToAttach);
+	
 	void UpdateCarriedAmmo();
-	void PlayEquipWeaponSound();
+	void PlayEquipWeaponSound(AOFWeapon* WeaponToEquip);
 	void ReloadWeaponIfEmpty();
-
+	
+	
 	void ApplyRecoil();
 	void UpdateRecoil(float DeltaTime);
 
@@ -101,6 +111,9 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AOFWeapon* EquippedWeapon;
+
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
+	AOFWeapon* SecondaryWeapon;
 
 	UPROPERTY(Replicated)
 	bool bAiming;
@@ -208,4 +221,5 @@ private:
 	
 public:
 	FORCEINLINE float GetRecoilOffset() const { return RecoilOffset; }
+	FORCEINLINE bool ShouldSwapWeapons() const { return EquippedWeapon != nullptr && SecondaryWeapon != nullptr; }
 };

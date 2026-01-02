@@ -105,8 +105,9 @@ void AOverfrontCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::AimInputEnd);
 		EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &AOverfrontCharacter::FireInputStart);
         EnhancedInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &AOverfrontCharacter::FireInputEnd);
-        EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::ReloadInput);
-        EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Triggered, this, &AOverfrontCharacter::ThrowGrenadeInput);
+        EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &AOverfrontCharacter::ReloadInput);
+        EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Started, this, &AOverfrontCharacter::ThrowGrenadeInput);
+        EnhancedInputComponent->BindAction(SwapWeaponsAction, ETriggerEvent::Started, this, &AOverfrontCharacter::SwapWeaponsInput);
 	}
 }
 
@@ -341,6 +342,14 @@ void AOverfrontCharacter::EquipInput(const FInputActionValue& Value)
 		{
 			ServerEquip();
 		}
+	}
+}
+
+void AOverfrontCharacter::SwapWeaponsInput(const FInputActionValue& Value)
+{
+	if (CombatComponent && CombatComponent->ShouldSwapWeapons())
+	{
+		CombatComponent->SwapWeapons();
 	}
 }
 
@@ -631,16 +640,7 @@ void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, cons
 // Called by the GameMode so only on the server
 void AOverfrontCharacter::OnEliminated(float Delay)
 {
-	if (CombatComponent && CombatComponent->EquippedWeapon)
-	{
-		if (CombatComponent->EquippedWeapon->bDestroyWeapon)
-		{
-			CombatComponent->EquippedWeapon->Destroy();
-		} else
-		{
-			CombatComponent->EquippedWeapon->Dropped();
-		}
-	}
+	DropOrDestroyWeapons();
 	MulticastOnEliminated();
 	GetWorldTimerManager().SetTimer(EliminationTimerHandle, this, &ThisClass::EliminationTimerFinished, Delay);
 }
@@ -668,6 +668,32 @@ void AOverfrontCharacter::EliminationTimerFinished()
 	if (AOverfrontGameMode* OverfrontGameMode = GetWorld()->GetAuthGameMode<AOverfrontGameMode>())
 	{
 		OverfrontGameMode->RequestRespawn(this, Controller);
+	}
+}
+
+void AOverfrontCharacter::DropOrDestroyWeapon(AOFWeapon* Weapon)
+{
+	if (Weapon == nullptr) return;
+	if (Weapon->bDestroyWeapon)
+	{
+		Weapon->Destroy();
+	} else
+	{
+		Weapon->Dropped();
+	}
+}
+
+void AOverfrontCharacter::DropOrDestroyWeapons()
+{
+	if (CombatComponent == nullptr) return;
+	
+	if (CombatComponent->EquippedWeapon)
+	{
+		DropOrDestroyWeapon(CombatComponent->EquippedWeapon);
+	}
+	if (CombatComponent->SecondaryWeapon)
+	{
+		DropOrDestroyWeapon(CombatComponent->SecondaryWeapon);
 	}
 }
 

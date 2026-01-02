@@ -63,6 +63,10 @@ class OVERFRONT_API AOverfrontCharacter : public ACharacter, public IOFInteractW
 	/** Throw Grenade Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* ThrowGrenadeAction;
+
+	/** Swap Weapons Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* SwapWeaponsAction;
 	
 public:
 	AOverfrontCharacter();
@@ -112,6 +116,9 @@ protected:
 	/** Equip **/
 	void EquipInput(const FInputActionValue& Value);
 
+	/** Swap Weapons **/
+	void SwapWeaponsInput(const FInputActionValue& Value);
+
 	/** Crouch **/
 	void CrouchInputStart(const FInputActionValue& Value);
 	void CrouchInputStop(const FInputActionValue& Value);
@@ -136,6 +143,9 @@ protected:
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+
+	void DropOrDestroyWeapon(AOFWeapon* Weapon);
+	void DropOrDestroyWeapons();
 private:
 	/** Character Components **/
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
