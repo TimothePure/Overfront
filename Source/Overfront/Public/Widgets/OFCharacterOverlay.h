@@ -74,6 +74,12 @@ public:
 	UTextBlock* MatchCountdownText;
 	
 	void BlinkCountdown();
+	
+	UPROPERTY(meta = (BindWidget))
+	UImage* HighPingImage;
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient )
+	UWidgetAnimation* HighPingAnimation;
 
 private:
 	float Health;

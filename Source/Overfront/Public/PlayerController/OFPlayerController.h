@@ -94,6 +94,10 @@ protected:
 
 	void HandleMatchInProgress();
 	void HandlePostMatchCooldown();
+	
+	void StartHighPingWarning();
+	void StopHighPingWarning();
+	
 private:
 	UPROPERTY()
 	class AOFHUD* HUD;
@@ -122,4 +126,18 @@ private:
 	UPROPERTY()
 	FPendingHUDData PendingHUDData;
 	void InitHUDOverlay();
-};
+	
+	/** High Ping Warning **/ 
+	void CheckPing();
+	FTimerHandle CheckPingTimerHandle;
+	FTimerHandle PingWarningTimerHandle;
+	
+	UPROPERTY(EditAnywhere, Category = "Ping")
+	float HighPingWarningDuration = 5.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Ping")
+	float CheckPingFrequency = 10.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Ping")
+	float HighPingThreshold = 50.f;
+}; 

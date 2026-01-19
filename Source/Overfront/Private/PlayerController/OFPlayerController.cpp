@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Character/OverfrontCharacter.h"
+#include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
@@ -33,7 +34,8 @@ void AOFPlayerController::BeginPlay()
     IsLocalController(),
     GetLocalPlayer() ? *GetLocalPlayer()->GetName() : TEXT("NONE"),
     (int32)GetNetMode());
-
+    
+    GetWorldTimerManager().SetTimer(CheckPingTimerHandle, this, &ThisClass::CheckPing, CheckPingFrequency, true);
 }
 
 void AOFPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -372,7 +374,6 @@ void AOFPlayerController::InitHUDOverlay()
     }
 }
 
-
 void AOFPlayerController::ServerCheckMatchState_Implementation()
 {
     GameMode = GameMode == nullptr ? Cast<AOverfrontGameMode>(UGameplayStatics::GetGameMode(this)) : GameMode;
@@ -495,5 +496,40 @@ void AOFPlayerController::HandlePostMatchCooldown()
             }
             HUD->AnnouncementWidget->InfoText->SetText(FText::FromString(InfoText));
         }
+    }
+}
+
+void AOFPlayerController::StartHighPingWarning()
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->HighPingImage && HUD->CharacterOverlay->HighPingAnimation)
+    {
+        HUD->CharacterOverlay->HighPingImage->SetOpacity(1.f);
+        HUD->CharacterOverlay->PlayAnimation(HUD->CharacterOverlay->HighPingAnimation, 0.f, 5); 
+    }
+}
+
+void AOFPlayerController::StopHighPingWarning()
+{
+    HUD = HUD == nullptr ? Cast<AOFHUD>(GetHUD()) : HUD;
+
+    if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->HighPingImage && HUD->CharacterOverlay->HighPingAnimation)
+    {
+        HUD->CharacterOverlay->HighPingImage->SetOpacity(0.f);
+        if (HUD->CharacterOverlay->IsAnimationPlaying(HUD->CharacterOverlay->HighPingAnimation))
+        {
+            HUD->CharacterOverlay->StopAnimation(HUD->CharacterOverlay->HighPingAnimation);
+        }
+    }
+}
+
+void AOFPlayerController::CheckPing()
+{
+    PlayerState = PlayerState == nullptr ? GetPlayerState<AOFPlayerState>() : PlayerState;
+    if (PlayerState->GetPingInMilliseconds() > HighPingThreshold)
+    {
+        StartHighPingWarning();
+        GetWorldTimerManager().SetTimer(PingWarningTimerHandle, this, &ThisClass::StopHighPingWarning, HighPingWarningDuration, false);
     }
 }

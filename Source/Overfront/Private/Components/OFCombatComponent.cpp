@@ -99,7 +99,6 @@ void UOFCombatComponent::FireInput(bool bPressed)
 
 void UOFCombatComponent::Fire()
 {
-	
 	if (CanFire())
 	{
 		bCurrentlyFiring = true;
