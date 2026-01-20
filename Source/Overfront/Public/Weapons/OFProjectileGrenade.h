@@ -16,7 +16,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	
+   	
 	UFUNCTION()
 	void OnBounce(const FHitResult& ImpactResult, const FVector& ImpactNormal);
 	

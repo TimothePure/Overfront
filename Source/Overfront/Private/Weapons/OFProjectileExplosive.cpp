@@ -7,6 +7,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Weapons/Damage/OFWeaponDamageType.h"
 
 void AOFProjectileExplosive::BeginPlay()
 {
@@ -41,9 +42,9 @@ void AOFProjectileExplosive::Explode()
 	{
 		if (AController* FiringController = FiringPawn->GetController())
 		{
-			UGameplayStatics::ApplyRadialDamageWithFalloff(this, Damage, Damage / 10,
-				GetActorLocation(), DamageInnerRadius, DamageOuterRadius, 1.f, UDamageType::StaticClass(),
-				TArray<AActor*>(), this, FiringController);
+			UGameplayStatics::ApplyRadialDamageWithFalloff(this, BaseDamage,  BaseDamage / 4,
+			GetActorLocation(), DamageInnerRadius, DamageOuterRadius, 1.f, UDamageType::StaticClass(),
+			TArray<AActor*>(), this, FiringController);
 		}
 	}
 	

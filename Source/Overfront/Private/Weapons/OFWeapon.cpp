@@ -118,8 +118,10 @@ void AOFWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
-	
-	SpendAmmo();
+	if (HasAuthority())
+	{
+		SpendAmmo();
+	}
 }
 
 void AOFWeapon::Dropped()

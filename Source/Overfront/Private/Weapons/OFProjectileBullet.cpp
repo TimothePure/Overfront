@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
 #include "Particles/ParticleSystem.h"
+#include "Weapons/Damage/OFWeaponDamageType.h"
 
 AOFProjectileBullet::AOFProjectileBullet() 
 {
@@ -20,6 +21,8 @@ void AOFProjectileBullet::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	StartLocation = GetActorLocation();
+	
 	if (Tracer)
 	{
 		TracerComponent = UGameplayStatics::SpawnEmitterAttached(Tracer, CollisionBox, FName(), GetActorLocation(),
@@ -30,11 +33,17 @@ void AOFProjectileBullet::BeginPlay()
 void AOFProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                                 FVector NormalImpulse, const FHitResult& HitResult)
 {
+	if (!HasAuthority()) return;
+	
 	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
 	{
 		if (AController* OwnerController = OwnerCharacter->GetController())
 		{
-			UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+			FVector ShotDirection = (HitResult.ImpactPoint - StartLocation).GetSafeNormal();
+			if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
+			{
+				UGameplayStatics::ApplyPointDamage(OtherActor, WeaponDamage->BaseDamage, ShotDirection, HitResult, OwnerController, this, DamageType);
+			}
 		}
 	}
 	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, HitResult);

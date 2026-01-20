@@ -15,6 +15,11 @@ public:
 	AOFProjectile();
 	virtual void Destroyed() override;
 	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UPROPERTY(Replicated)
+	TSubclassOf<UDamageType> DamageType;
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -22,8 +27,8 @@ protected:
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult);
 
 	UPROPERTY(EditAnywhere, Category = "Projectile|Damage")
-	float Damage = 20.f;
-
+	float BaseDamage = 20.f;
+	
 	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
 	UParticleSystem* ImpactParticles;
 

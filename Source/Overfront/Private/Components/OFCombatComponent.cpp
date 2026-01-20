@@ -103,6 +103,7 @@ void UOFCombatComponent::Fire()
 	{
 		bCurrentlyFiring = true;
 		ServerFire(Target);
+		LocalFire(Target);
 		CrosshairShootingFactor = 0.75f;
 		StartFireTimer();
 		ApplyRecoil();
@@ -132,6 +133,12 @@ void UOFCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Tr
 }
 
 void UOFCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	if (Character && Character->IsLocallyControlled()) return;
+	LocalFire(TraceHitTarget);
+}
+
+void UOFCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeapon == nullptr || Character == nullptr) return;
 
@@ -180,6 +187,8 @@ void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
 
 void UOFCombatComponent::SwapWeapons()
 {
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	
 	AOFWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;

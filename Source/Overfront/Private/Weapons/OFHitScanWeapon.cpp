@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Weapons/Damage/OFWeaponDamageType.h"
 
 void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -16,7 +17,6 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 	if (OwnerPawn == nullptr) return;
 	AController* InstigatorController = OwnerPawn->GetController();
 	
-	  
 	if (const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash"))
 	{
 		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
@@ -29,7 +29,11 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 			AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor());
 			if (HitCharacter && HasAuthority() && InstigatorController)
 			{
-				UGameplayStatics::ApplyDamage(HitCharacter, Damage, InstigatorController, this, UDamageType::StaticClass());
+				FVector ShotDirection = (HitTarget - Start).GetSafeNormal();
+				if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
+				{
+					UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, ShotDirection, FireHit, InstigatorController, this, DamageType);
+				}
 			}
 			
 			if (ImpactParticles)

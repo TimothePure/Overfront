@@ -4,6 +4,7 @@
 #include "Weapons/OFProjectileWeapon.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Weapons/OFProjectile.h"
+#include "Weapons/OFProjectileBullet.h"
 
 
 AOFProjectileWeapon::  AOFProjectileWeapon()
@@ -34,7 +35,10 @@ void AOFProjectileWeapon::Fire(const FVector& HitTarget)
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.Owner = GetOwner();
 				SpawnParams.Instigator = InstigatorPawn;
-				World->SpawnActor<AOFProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+				if (AOFProjectile* SpawnedProjectile = World->SpawnActor<AOFProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams))
+				{
+					SpawnedProjectile->DamageType = DamageType;
+				}
 			}
 		}
 	}

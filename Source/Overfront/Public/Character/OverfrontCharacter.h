@@ -93,6 +93,7 @@ public:
 	void ShowSniperScopeWidget(bool bShowScope);
 
 	void SpawnDefaultWeapon();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
@@ -141,9 +142,16 @@ protected:
 	void SimProxiesTurn();
 	void PlayHitReactMontage();
 
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
+	
 	UFUNCTION()
-	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+	void HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatorController, FVector HitLocation,
+		UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
 
+	UFUNCTION()
+	void HandleRadialDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, FVector Origin, 
+		const FHitResult& HitInfo, AController* InstigatorController, AActor* DamageCauser);
+	
 	void DropOrDestroyWeapon(AOFWeapon* Weapon);
 	void DropOrDestroyWeapons();
 private:

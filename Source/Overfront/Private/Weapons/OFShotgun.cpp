@@ -64,7 +64,8 @@ void AOFShotgun::Fire(const FVector& HitTarget)
 			{
 				if (HitPair.Key)
 				{
-					UGameplayStatics::ApplyDamage(HitPair.Key, Damage * HitPair.Value, InstigatorController, this, UDamageType::StaticClass());
+					FHitResult DummyHit;
+					UGameplayStatics::ApplyPointDamage(HitPair.Key, 0.f, (HitTarget - Start).GetSafeNormal(), DummyHit, InstigatorController, this, DamageType);
 				}
 			}
 		}

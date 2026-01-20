@@ -21,6 +21,7 @@
 #include "PlayerController/OFPlayerController.h"
 #include "PlayerState/OFPlayerState.h"
 #include "Weapons/OFWeapon.h"
+#include "Weapons/Damage/OFWeaponDamageType.h"
 
 #pragma region ClassSetup
 
@@ -147,7 +148,8 @@ void AOverfrontCharacter::BeginPlay()
 	
 	if (HasAuthority())
 	{
-		OnTakeAnyDamage.AddDynamic(this, &AOverfrontCharacter::ReceiveDamage);
+		OnTakePointDamage.AddDynamic(this, &AOverfrontCharacter::HandlePointDamage);
+		OnTakeRadialDamage.AddDynamic(this, &AOverfrontCharacter::HandleRadialDamage);
 	}
 	
 	if (AttachedGrenade)
@@ -603,8 +605,7 @@ void AOverfrontCharacter::PlayThrowGrenadeMontage()
 	}
 }
 
-void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
-                                        AController* InstigatorController, AActor* DamageCauser)
+void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
 	float DamageRemaining = Damage;
 	
@@ -636,6 +637,39 @@ void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, cons
 		}
 	}
 }
+
+void AOverfrontCharacter::HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatorController, FVector HitLocation,
+	UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser)
+{
+	const UOFWeaponDamageType* WeaponDamageType = Cast<UOFWeaponDamageType>(DamageType);
+	
+	if (!WeaponDamageType) return;
+	
+	float FinalDamage = WeaponDamageType->BaseDamage;
+	
+	// Hit zone detection
+	if (BoneName == FName("head"))
+	{
+		FinalDamage = WeaponDamageType->HeadDamage;
+	}
+	else if (BoneName == FName("pelvis") || BoneName.ToString().Contains("spine"))
+	{
+		FinalDamage = WeaponDamageType->TorsoDamage;
+	}
+	else
+	{
+		FinalDamage = WeaponDamageType->LimbsDamage;
+	}
+	
+	ReceiveDamage(DamagedActor, FinalDamage, DamageType, InstigatorController, DamageCauser);
+}
+
+void AOverfrontCharacter::HandleRadialDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
+	FVector Origin, const FHitResult& HitInfo, AController* InstigatorController, AActor* DamageCauser)
+{
+	ReceiveDamage(DamagedActor, Damage, DamageType, InstigatorController, DamageCauser);
+}
+
 
 // Called by the GameMode so only on the server
 void AOverfrontCharacter::OnEliminated(float Delay)

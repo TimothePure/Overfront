@@ -24,4 +24,6 @@ private:
 
 	UPROPERTY()
 	UParticleSystemComponent* TracerComponent;
+	
+	FVector StartLocation;
 };

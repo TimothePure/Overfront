@@ -7,6 +7,8 @@
 #include "Overfront/Enums/OFWeaponTypes.h"
 #include "OFWeapon.generated.h"
 
+class UOFWeaponDamageType;
+
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
@@ -95,7 +97,10 @@ protected:
 
 	UFUNCTION()
 	void OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComponent,AActor* OtherActor,UPrimitiveComponent* OtherComp,int32 OtherBodyIndex);
-
+	
+	UPROPERTY(EditAnywhere, Category = "Weapon|Damage")
+	TSubclassOf<UDamageType> DamageType;
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	USkeletalMeshComponent* WeaponMesh;
