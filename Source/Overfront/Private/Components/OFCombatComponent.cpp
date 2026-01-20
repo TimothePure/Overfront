@@ -189,6 +189,13 @@ void UOFCombatComponent::SwapWeapons()
 {
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	
+	ServerSwapWeapons();
+}
+
+void UOFCombatComponent::ServerSwapWeapons_Implementation()
+{
+	if (!EquippedWeapon || !SecondaryWeapon) return;
+	
 	AOFWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;
@@ -206,7 +213,7 @@ void UOFCombatComponent::SwapWeapons()
 	// For secondary Weapon
 	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 	AttachActorToBack(SecondaryWeapon);
-	EquippedWeapon->SetOwner(Character);
+	SecondaryWeapon->SetOwner(Character);
 }
 
 void UOFCombatComponent::EquipPrimaryWeapon(AOFWeapon* WeaponToEquip)

@@ -28,6 +28,9 @@ public:
 
 	void EquipWeapon(AOFWeapon* WeaponToEquip);
 	void SwapWeapons();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerSwapWeapons();
 	void Reload();
 
 	UFUNCTION(BlueprintCallable)
