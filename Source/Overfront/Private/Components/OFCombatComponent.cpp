@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/OFPlayerController.h"
+#include "Weapons/OFHitScanWeapon.h"
 #include "Weapons/OFProjectile.h"
 #include "Weapons/OFWeapon.h"
 #include "Widgets/OFHUD.h"
@@ -102,12 +103,44 @@ void UOFCombatComponent::Fire()
 	if (CanFire())
 	{
 		bCurrentlyFiring = true;
-		ServerFire(Target);
-		LocalFire(Target);
+
+		switch (EquippedWeapon->FireType)
+		{
+			case EFireType::EFT_Projectile:
+				FireProjectileWeapon();
+				break;
+			case EFireType::EFT_HitScan:
+				FireHitScanWeapon();
+				break;
+			case EFireType::EFT_Shotgun:
+				FireShotgun();
+				break;
+		}
+		
 		CrosshairShootingFactor = 0.75f;
 		StartFireTimer();
 		ApplyRecoil();
 	}
+}
+
+void UOFCombatComponent::FireProjectileWeapon()
+{
+	LocalFire(Target);
+	ServerFire(Target);
+}
+
+void UOFCombatComponent::FireHitScanWeapon()
+{
+	if (EquippedWeapon)
+	{
+		Target = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(Target) : Target;
+		LocalFire(Target);
+		ServerFire(Target);
+	}
+}
+
+void UOFCombatComponent::FireShotgun()
+{
 }
 
 void UOFCombatComponent::StartFireTimer()

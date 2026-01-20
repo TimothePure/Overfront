@@ -20,6 +20,16 @@ enum class EWeaponState : uint8
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
+UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	EFT_HitScan UMETA(DisplayName = "HitScan Weapon"),
+	EFT_Projectile UMETA(DisplayName = "Projectile Weapon"),
+	EFT_Shotgun UMETA(DisplayName = "Shotgun"),
+	
+	EFT_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
 UCLASS()
 class OVERFRONT_API AOFWeapon : public AActor
 {
@@ -36,6 +46,8 @@ public:
 	virtual void Fire(const FVector& HitTarget);
 	void Dropped();
 	void AddAmmo(int32 Amount);
+	
+	FVector TraceEndWithScatter(const FVector& HitTarget);
 
 	// Textures for the weapon crosshairs
 	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshair")
@@ -83,6 +95,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon|Recoil")
 	float RecoilImpulse = 45.f;
+	
+	UPROPERTY(EditAnywhere)
+	EFireType FireType;
+	
+	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
+	bool bUseScatter = false;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -142,6 +160,13 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	EWeaponType WeaponType;
+	
+	/** Trace with scatter **/
+	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
+	float DistanceToSphere = 800.f;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
+	float SphereRadius = 75.f;
 	
 public:
 	void SetWeaponState(EWeaponState State);

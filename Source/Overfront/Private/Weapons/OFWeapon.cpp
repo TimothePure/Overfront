@@ -8,6 +8,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/OFPlayerController.h"
 #include "Weapons/OFBulletShell.h"
@@ -139,6 +140,25 @@ void AOFWeapon::AddAmmo(int32 Amount)
 {
 	Ammo = FMath::Clamp(Ammo + Amount, 0, MagCapacity);
 	SetHUDAmmo();
+}
+
+FVector AOFWeapon::TraceEndWithScatter(const FVector& HitTarget)
+{
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
+	
+	if (MuzzleFlashSocket == nullptr) return FVector();
+	
+	FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	FVector TraceStart = SocketTransform.GetLocation();
+	
+	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
+	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
+
+	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
+	FVector EndLoc = SphereCenter + RandVec;
+	FVector ToEndLoc = EndLoc - TraceStart;
+	
+	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
 }
 
 void AOFWeapon::EnableCustomDepth(bool bEnable)

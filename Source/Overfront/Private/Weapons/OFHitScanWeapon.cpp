@@ -6,9 +6,10 @@
 #include "Character/OverfrontCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Weapons/Damage/OFWeaponDamageType.h"
+
+#include "DrawDebugHelpers.h"
 
 void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -62,13 +63,15 @@ void AOFHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& 
 {
 	if (UWorld* World = GetWorld())
 	{
-		FVector End = bUseScatter ? TraceEndWithScatter(TraceStart, HitTarget) : TraceStart + (HitTarget - TraceStart) * 1.25f;
+		FVector End = TraceStart + (HitTarget - TraceStart) * 1.25f;
 		World->LineTraceSingleByChannel(OutHit, TraceStart, End, ECC_Visibility);
 		FVector BeamEnd = End;
 		if (OutHit.bBlockingHit)
 		{
 			BeamEnd = OutHit.ImpactPoint;
 		}
+		
+		// DrawDebugSphere(GetWorld(), BeamEnd, 6.f, 12, FColor::Orange, true);
 		
 		if (BeamParticles)
 		{
@@ -80,15 +83,4 @@ void AOFHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& 
 	}
 }
 
-FVector AOFHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget)
-{
-	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
-	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
-
-	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
-	FVector EndLoc = SphereCenter + RandVec;
-	FVector ToEndLoc = EndLoc - TraceStart;
-	
-	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
-}
 
