@@ -6,7 +6,9 @@
 #include "Character/OverfrontCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Weapons/Damage/OFWeaponDamageType.h"
 
 
 AOFShotgun::AOFShotgun()
@@ -20,21 +22,20 @@ void AOFShotgun::BeginPlay()
 	
 }
 
-void AOFShotgun::Fire(const FVector& HitTarget)
+void AOFShotgun::FireShotgun(const TArray<FVector_NetQuantize> HitTargets)
 {
-	AOFWeapon::Fire(HitTarget);
+	AOFWeapon::Fire(FVector());
+	
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
 	if (OwnerPawn == nullptr) return;
 	AController* InstigatorController = OwnerPawn->GetController();
 	
-	  
 	if (const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash"))
 	{
 		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 		FVector Start = SocketTransform.GetLocation();
-		TMap<AOverfrontCharacter*, uint32> HitMap;
 
-		for (uint32 i = 0; i < NumberOfPellets; i++)
+		for (auto HitTarget : HitTargets)
 		{
 			FHitResult FireHit;
 			WeaponTraceHit(Start, HitTarget, FireHit);
@@ -44,7 +45,10 @@ void AOFShotgun::Fire(const FVector& HitTarget)
 				AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor());
 				if (HitCharacter && HasAuthority() && InstigatorController)
 				{
-					HitMap.FindOrAdd(HitCharacter)++;
+					if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
+					{
+						UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, (HitTarget - Start).GetSafeNormal(), FireHit, InstigatorController, this, DamageType);
+					}
 				}
 
 				if (ImpactParticles)
@@ -57,19 +61,28 @@ void AOFShotgun::Fire(const FVector& HitTarget)
 				}
 			}
 		}
+	}
+}
 
-		if (HasAuthority() && InstigatorController)
-		{
-			for (auto HitPair : HitMap)
-			{
-				if (HitPair.Key)
-				{
-					FHitResult DummyHit;
-					UGameplayStatics::ApplyPointDamage(HitPair.Key, 0.f, (HitTarget - Start).GetSafeNormal(), DummyHit, InstigatorController, this, DamageType);
-				}
-			}
-		}
+void AOFShotgun::ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& OutTargets)
+{
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
+	
+	if (MuzzleFlashSocket == nullptr) return;
+	
+	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	const FVector TraceStart = SocketTransform.GetLocation();
+	
+	const FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
+	const FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
+	
+	for (uint32 i = 0; i < NumberOfPellets; i++)
+	{
+		const FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
+		const FVector EndLoc = SphereCenter + RandVec;
+		const FVector ToEndLoc = EndLoc - TraceStart;
+		const FVector Target = FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
 		
-		
+		OutTargets.Add(Target);
 	}
 }

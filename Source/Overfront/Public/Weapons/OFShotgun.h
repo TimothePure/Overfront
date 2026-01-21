@@ -13,7 +13,8 @@ class OVERFRONT_API AOFShotgun : public AOFHitScanWeapon
 
 public:
 	AOFShotgun();
-	virtual void Fire(const FVector& Hit) override;
+	virtual void FireShotgun(const TArray<FVector_NetQuantize> HitTargets);
+	void ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& OutTargets);
 
 protected:
 	virtual void BeginPlay() override;
