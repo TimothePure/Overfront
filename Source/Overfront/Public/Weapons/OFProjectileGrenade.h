@@ -23,4 +23,7 @@ protected:
 private:
 	UPROPERTY(EditAnywhere)
 	USoundBase* BounceSound;
+	
+	FTimerHandle InstigatorIgnoreCollisionHandle;
+	void IgnoreCollisionFinished();
 };

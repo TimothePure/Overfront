@@ -2,6 +2,8 @@
 
 
 #include "Weapons/OFProjectileGrenade.h"
+
+#include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -26,6 +28,15 @@ void AOFProjectileGrenade::BeginPlay()
 	StartExplodeTimer();
 	
 	ProjectileMovementComponent->OnProjectileBounce.AddDynamic(this, &AOFProjectileGrenade::OnBounce);
+	
+	CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	
+	if (APawn* InstigatorPawn = GetInstigator())
+	{
+		CollisionBox->IgnoreActorWhenMoving(InstigatorPawn,   true);
+	}
+	
+	GetWorldTimerManager().SetTimer(InstigatorIgnoreCollisionHandle, this, &AOFProjectileGrenade::IgnoreCollisionFinished, 0.3f, false);
 }
 
 void AOFProjectileGrenade::OnBounce(const FHitResult& ImpactResult, const FVector& ImpactNormal)
@@ -33,6 +44,14 @@ void AOFProjectileGrenade::OnBounce(const FHitResult& ImpactResult, const FVecto
 	if (BounceSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, BounceSound, GetActorLocation());
+	}
+}
+
+void AOFProjectileGrenade::IgnoreCollisionFinished()
+{
+	if (APawn* InstigatorPawn = GetInstigator())
+	{
+		CollisionBox->IgnoreActorWhenMoving(InstigatorPawn, false);
 	}
 }
 
