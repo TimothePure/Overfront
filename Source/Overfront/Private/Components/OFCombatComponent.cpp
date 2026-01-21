@@ -3,6 +3,8 @@
 
 #include "Components/OFCombatComponent.h"
 
+#include <filesystem>
+
 #include "Camera/CameraComponent.h"
 #include "Character/OverfrontCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -229,6 +231,7 @@ void UOFCombatComponent::MulticastShotgunFire_Implementation(const TArray<FVecto
 bool UOFCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr) return false;
+	if (bLocallyReloading) return false;
 	if (!EquippedWeapon->IsEmpty() && !bCurrentlyFiring && CombatState == ECombatState::ECS_Reloading &&
 		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;
 	return !EquippedWeapon->IsEmpty() && !bCurrentlyFiring && CombatState == ECombatState::ECS_Unoccupied;
@@ -434,6 +437,8 @@ void UOFCombatComponent::SetAiming(bool bIsAiming)
 	{
 		Character->ShowSniperScopeWidget(bIsAiming);
 	}
+	
+	if (Character->IsLocallyControlled()) bAimButtonPressed = bIsAiming;
 }
 
 void UOFCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
@@ -608,9 +613,11 @@ void UOFCombatComponent::Reload()
 {
 	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied)
 	{
-		if (EquippedWeapon && EquippedWeapon->GetMagCapacity() > EquippedWeapon->GetAmmo())
+		if (EquippedWeapon && !EquippedWeapon->IsFull() && !bLocallyReloading)
 		{
 			ServerReload();
+			HandleReload();
+			bLocallyReloading = true;
 		}
 	}
 }
@@ -620,7 +627,10 @@ void UOFCombatComponent::ServerReload_Implementation()
 	if (Character == nullptr || EquippedWeapon == nullptr) return;
 
 	CombatState = ECombatState::ECS_Reloading;
-	HandleReload();
+	if (!Character->IsLocallyControlled())
+	{
+		HandleReload();
+	}
 }
 
 void UOFCombatComponent::HandleReload()
@@ -646,6 +656,7 @@ int32 UOFCombatComponent::AmountToReload()
 void UOFCombatComponent::FinishReloading()
 {
 	if (Character == nullptr) return;
+	bLocallyReloading = false;
 	if (Character->HasAuthority())
 	{
 		CombatState = ECombatState::ECS_Unoccupied;
@@ -831,12 +842,23 @@ void UOFCombatComponent::UpdateRecoil(float DeltaTime)
 	RecoilOffset += RecoilVelocity * DeltaTime;
  }
 
+void UOFCombatComponent::OnRep_Aiming()
+{
+	if (Character && Character->IsLocallyControlled())
+	{
+		bAiming = bAimButtonPressed;
+	}
+}
+
 void UOFCombatComponent::OnRep_CombatState()
 {
 	switch (CombatState)
 	{
 		case ECombatState::ECS_Reloading:
-			HandleReload();
+			if (Character && !Character->IsLocallyControlled())
+			{
+				HandleReload();
+			}
 			break;
 		case ECombatState::ECS_Unoccupied:
 			if (bFireInputPressed)

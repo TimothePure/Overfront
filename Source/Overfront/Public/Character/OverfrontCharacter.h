@@ -284,4 +284,5 @@ public:
 	FORCEINLINE UOFBuffComponent* GetBuffComponent() const { return BuffComponent; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
+	bool IsLocallyReloading();
 };

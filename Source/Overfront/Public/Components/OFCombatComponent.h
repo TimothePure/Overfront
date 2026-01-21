@@ -50,7 +50,7 @@ public:
 	void ServerLaunchGrenade(const FVector_NetQuantize& HitTarget);
 	
 	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
-	
+	bool bLocallyReloading = false;
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -132,8 +132,14 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
 	AOFWeapon* SecondaryWeapon;
 
-	UPROPERTY(Replicated)
-	bool bAiming;
+	UPROPERTY(ReplicatedUsing = OnRep_Aiming)
+	bool bAiming = false;
+	
+	UFUNCTION()
+	void OnRep_Aiming();
+	
+	// Local value of aiming
+	bool bAimButtonPressed = false;
 
 	UPROPERTY(EditAnywhere)
 	float BaseWalkSpeed;

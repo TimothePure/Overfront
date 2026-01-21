@@ -814,5 +814,11 @@ ECombatState AOverfrontCharacter::GetCombatState() const
 
 	return CombatComponent->CombatState;
 }
+
+bool AOverfrontCharacter::IsLocallyReloading()
+{
+	if (!CombatComponent) return false;
+	return CombatComponent->bLocallyReloading;
+}
 #pragma endregion Getters
 
