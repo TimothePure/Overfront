@@ -724,11 +724,14 @@ void AOverfrontCharacter::DropOrDestroyWeapons()
 	if (CombatComponent->EquippedWeapon)
 	{
 		DropOrDestroyWeapon(CombatComponent->EquippedWeapon);
+		CombatComponent->EquippedWeapon = nullptr;
 	}
 	if (CombatComponent->SecondaryWeapon)
 	{
 		DropOrDestroyWeapon(CombatComponent->SecondaryWeapon);
+		CombatComponent->SecondaryWeapon = nullptr;
 	}
+	
 }
 
 #pragma endregion Combat

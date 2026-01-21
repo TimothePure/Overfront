@@ -148,16 +148,23 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	TSubclassOf<class AOFBulletShell> BulletShellClass;
 
-	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo, Category = "Weapon|Properties")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	int32 Ammo;
-
-	UFUNCTION()
-	void OnRep_Ammo();
 
 	void SpendAmmo();
 	
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAmmo(int32 ServerAmmo);
+	
+	UFUNCTION(Client, Reliable)
+	void ClientAddAmmo(int32 AmmoToAdd);
+	
 	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	int32 MagCapacity;
+	
+	// The number of unprocessed server requests for Ammo.
+	// Incremented in SpendAmmo, decremented in ClientUpdateAmmo
+	int32 AmmoSequence = 0;
 
 	UPROPERTY()
 	class AOverfrontCharacter* OwnerCharacter;

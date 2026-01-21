@@ -44,7 +44,6 @@ void AOFWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AOFWeapon, WeaponState);
-	DOREPLIFETIME(AOFWeapon, Ammo);
 }
 
 void AOFWeapon::SetHUDAmmo()
@@ -119,10 +118,8 @@ void AOFWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
-	if (HasAuthority())
-	{
-		SpendAmmo();
-	}
+	
+	SpendAmmo();
 }
 
 void AOFWeapon::Dropped()
@@ -134,12 +131,6 @@ void AOFWeapon::Dropped()
 	SetOwner(nullptr);
 	OwnerCharacter = nullptr;
 	OwnerPlayerController = nullptr;
-}
-
-void AOFWeapon::AddAmmo(int32 Amount)
-{
-	Ammo = FMath::Clamp(Ammo + Amount, 0, MagCapacity);
-	SetHUDAmmo();
 }
 
 FVector AOFWeapon::TraceEndWithScatter(const FVector& HitTarget)
@@ -205,15 +196,43 @@ void AOFWeapon::SpendAmmo()
 {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
+	if (HasAuthority())
+	{
+		ClientUpdateAmmo(Ammo);
+	} else
+	{
+		++AmmoSequence;
+	}
 }
 
-void AOFWeapon::OnRep_Ammo()
+void AOFWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 {
+	if (HasAuthority()) return;
+	
+	Ammo = ServerAmmo;
+	--AmmoSequence;
+	Ammo -= AmmoSequence;
 	SetHUDAmmo();
+}
+
+void AOFWeapon::AddAmmo(int32 Amount)
+{
+	Ammo = FMath::Clamp(Ammo + Amount, 0, MagCapacity);
+	SetHUDAmmo();
+	ClientAddAmmo(Amount);
+}  
+
+void AOFWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
+{
+	if (HasAuthority()) return;
+	
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(GetOwner()) : OwnerCharacter;
 	if (OwnerCharacter && OwnerCharacter->GetCombatComponent() && IsFull())
 	{
-		 OwnerCharacter->GetCombatComponent()->JumpToShotgunEnd();
+		OwnerCharacter->GetCombatComponent()->JumpToShotgunEnd();
 	}
+	SetHUDAmmo();
 }
 
 // On the server
