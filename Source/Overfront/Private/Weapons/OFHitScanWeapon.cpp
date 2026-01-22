@@ -10,6 +10,8 @@
 #include "Weapons/Damage/OFWeaponDamageType.h"
 
 #include "DrawDebugHelpers.h"
+#include "Components/OFLagCompensationComponent.h"
+#include "PlayerController/OFPlayerController.h"
 
 void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -28,12 +30,26 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 		if (FireHit.bBlockingHit)
 		{
 			AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor());
-			if (HitCharacter && HasAuthority() && InstigatorController)
+			if (HitCharacter && InstigatorController)
 			{
 				FVector ShotDirection = (HitTarget - Start).GetSafeNormal();
 				if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
 				{
-					UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, ShotDirection, FireHit, InstigatorController, this, DamageType);
+					if (HasAuthority() && !bUseServerSideRewind)
+					{
+						UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, ShotDirection, FireHit, InstigatorController, this, DamageType);
+					}
+					if (bUseServerSideRewind && !HasAuthority())
+					{
+						OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(OwnerPawn) : OwnerCharacter;
+						OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(InstigatorController): OwnerPlayerController;
+						
+						if (OwnerCharacter && OwnerPlayerController && OwnerCharacter->GetLagCompensationComponent())
+						{
+							OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, 
+								OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime,this);
+						}
+					} 
 				}
 			}
 			

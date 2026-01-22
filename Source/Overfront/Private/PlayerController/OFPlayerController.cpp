@@ -334,7 +334,8 @@ void AOFPlayerController::ServerRequestPlayerTime_Implementation(float TimeOfCli
 void AOFPlayerController::ClientReportServerTime_Implementation(float TimeOfClientRequest, float TimeServerReceivedClientRequest)
 {
     float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
-    float CurrentServerTime = TimeServerReceivedClientRequest + (RoundTripTime / 2);
+    SingleTripTime = RoundTripTime / 2;
+    float CurrentServerTime = TimeServerReceivedClientRequest + SingleTripTime;
     ClientServerDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
 }
 

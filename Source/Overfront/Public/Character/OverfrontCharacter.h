@@ -94,6 +94,9 @@ public:
 
 	void SpawnDefaultWeapon();
 
+	UPROPERTY()
+	TMap<FName, class UBoxComponent*> HitBoxes;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
@@ -157,7 +160,7 @@ protected:
 	
 	/** Hit boxes used for server-side rewind **/
 	UPROPERTY(EditAnywhere)
-	class UBoxComponent* HeadBox;
+	UBoxComponent* HeadBox;
 	
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* PelvisBox;
@@ -215,12 +218,16 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	class UWidgetComponent* OverheadWidget;
 
+	/** Character components **/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	class UOFCombatComponent* CombatComponent;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	class UOFBuffComponent* BuffComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	class UOFLagCompensationComponent* LagCompensationComponent;
+	
 	UPROPERTY()
 	class AOFPlayerController* OFPlayerController;
 	
@@ -335,4 +342,5 @@ public:
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 	bool IsLocallyReloading();
+	FORCEINLINE UOFLagCompensationComponent* GetLagCompensationComponent() { return LagCompensationComponent; }
 };

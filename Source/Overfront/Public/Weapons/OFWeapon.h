@@ -126,6 +126,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
 	float SphereRadius = 75.f;
 	
+	UPROPERTY(EditAnywhere, Category = "Server Rewind")
+	bool bUseServerSideRewind = false;
+	
+	UPROPERTY()
+	class AOverfrontCharacter* OwnerCharacter;
+
+	UPROPERTY()
+	class AOFPlayerController* OwnerPlayerController;
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	USkeletalMeshComponent* WeaponMesh;
@@ -165,12 +173,6 @@ private:
 	// The number of unprocessed server requests for Ammo.
 	// Incremented in SpendAmmo, decremented in ClientUpdateAmmo
 	int32 AmmoSequence = 0;
-
-	UPROPERTY()
-	class AOverfrontCharacter* OwnerCharacter;
-
-	UPROPERTY()
-	class AOFPlayerController* OwnerPlayerController;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	EWeaponType WeaponType;
