@@ -154,6 +154,56 @@ protected:
 	
 	void DropOrDestroyWeapon(AOFWeapon* Weapon);
 	void DropOrDestroyWeapons();
+	
+	/** Hit boxes used for server-side rewind **/
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* HeadBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* PelvisBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* Spine02Box;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* Spine03Box;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* UpperArmLBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* UpperArmRBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* LowerArmLBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* LowerArmRBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HandLBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* HandRBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* ThighLBox;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* ThighRBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* CalfLBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* CalfRBox;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* FootLBox;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* FootRBox;
+	
 private:
 	/** Character Components **/
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
