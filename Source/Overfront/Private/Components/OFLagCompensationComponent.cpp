@@ -7,6 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapons/OFWeapon.h"
+#include "Weapons/Damage/OFWeaponDamageType.h"
 
 UOFLagCompensationComponent::UOFLagCompensationComponent()
 {
@@ -29,22 +30,6 @@ void UOFLagCompensationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	SaveFramePackage();
 }
 
-void UOFLagCompensationComponent::SaveFramePackage(FFRamePackage& Package)
-{
-	Character = Character == nullptr ? Cast<AOverfrontCharacter>(GetOwner()) : Character;
-	if (Character == nullptr) return;
-	Package.Time = GetWorld()->GetTimeSeconds();
-	for (auto& BoxPair : Character->HitBoxes)
-	{
-		FBoxInformation BoxInfo;
-		BoxInfo.Location = BoxPair.Value->GetComponentLocation();
-		BoxInfo.Rotation = BoxPair.Value->GetComponentRotation();
-		BoxInfo.BoxExtent = BoxPair.Value->GetScaledBoxExtent();
-		
-		Package.HitBoxInfos.Add(BoxPair.Key, BoxInfo);
-	}
-}
-
 void UOFLagCompensationComponent::ShowFramePackage(const FFRamePackage& Package, const FColor& Color)
 {
 	for (auto& BoxInfo : Package.HitBoxInfos)
@@ -53,7 +38,7 @@ void UOFLagCompensationComponent::ShowFramePackage(const FFRamePackage& Package,
 	}
 }
 
-FServerSideRewindResult UOFLagCompensationComponent::ServerSideRewind(class AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
+FServerSideRewindResult UOFLagCompensationComponent::ServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
 	const FVector_NetQuantize& HitLocation, float HitTime)
 {
 	if (HitCharacter == nullptr || HitCharacter->GetLagCompensationComponent() == nullptr || 
@@ -66,7 +51,7 @@ FServerSideRewindResult UOFLagCompensationComponent::ServerSideRewind(class AOve
 	const TDoubleLinkedList<FFRamePackage>& HitCharacterHistory = HitCharacter->GetLagCompensationComponent()->FrameHistory;
 	const float OldestHistoryTime = HitCharacterHistory.GetTail()->GetValue().Time;
 	const float NewestHistoryTime = HitCharacterHistory.GetHead()->GetValue().Time;
-	if (OldestHistoryTime > HitTime ) return FServerSideRewindResult(); // Too far back - too laggy for SSR
+	if (OldestHistoryTime > HitTime) return FServerSideRewindResult(); // Too far back - too laggy for SSR
 	if (OldestHistoryTime == HitTime )
 	{
 		FrameToCheck = HitCharacterHistory.GetHead()->GetValue();
@@ -109,17 +94,21 @@ FServerSideRewindResult UOFLagCompensationComponent::ServerSideRewind(class AOve
 	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
 }
 
-void UOFLagCompensationComponent::ServerScoreRequest(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
-	const FVector_NetQuantize& HitLocation, float HitTime,  AOFWeapon* DamageCauser)
+void UOFLagCompensationComponent::ServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize& HitLocation, const FName BoneName, float HitTime,  AOFWeapon* DamageCauser)
 {
 	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
 	
 	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed)
 	{
-		UGameplayStatics::ApplyDamage(HitCharacter, 20.f, Character->Controller, DamageCauser, UDamageType::StaticClass());
+		FHitResult HitResult;
+		HitResult.BoneName = BoneName;
+		if (UOFWeaponDamageType* WeaponDamage = DamageCauser->DamageType->GetDefaultObject<UOFWeaponDamageType>())
+		{
+			UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, FVector((HitLocation - TraceStart).Normalize()), HitResult, Character->Controller, DamageCauser, DamageCauser->DamageType);
+		}
+		// UGameplayStatics::ApplyDamage(HitCharacter, 20.f, Character->Controller, DamageCauser, UDamageType::StaticClass());
 	}
-	
-	
 }
 
 FFRamePackage UOFLagCompensationComponent::InterpolateBetweenFrames(const FFRamePackage& OlderFrame, const FFRamePackage& YoungerFrame, float HitTime)
@@ -171,24 +160,24 @@ FServerSideRewindResult UOFLagCompensationComponent::ConfirmHit(const FFRamePack
 			ResetHitBoxes(HitCharacter, CurrentFrame);	
 			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 			return FServerSideRewindResult{ true, true };
-		} else
+		}
+		
+		for (auto& HitBoxPair : HitCharacter->HitBoxes)
 		{
-			for (auto& HitBoxPair : HitCharacter->HitBoxes)
+			if (HitBoxPair.Value != nullptr)
 			{
-				if (HitBoxPair.Value != nullptr)
-				{
-					HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-					HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-				}
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 			}
-			World->LineTraceSingleByChannel(ConfirmHitResult, TraceStart, TraceEnd, ECC_Visibility); 
-			
-			if (ConfirmHitResult.bBlockingHit)
-			{
-				ResetHitBoxes(HitCharacter, CurrentFrame);	
-				EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
-				return FServerSideRewindResult{ true, false };
-			}
+		}
+		
+		World->LineTraceSingleByChannel(ConfirmHitResult, TraceStart, TraceEnd, ECC_Visibility); 
+		
+		if (ConfirmHitResult.bBlockingHit)
+		{
+			ResetHitBoxes(HitCharacter, CurrentFrame);	
+			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
+			return FServerSideRewindResult{ true, false };
 		}
 	}
 	
@@ -255,11 +244,11 @@ void UOFLagCompensationComponent::EnableCharacterMeshCollision(AOverfrontCharact
 
 void UOFLagCompensationComponent::SaveFramePackage()
 {
-	if (Character == nullptr || Character->HasAuthority()) return;
+	if (Character == nullptr || !Character->HasAuthority()) return;
 	
-	FFRamePackage ThisFrame;
 	if (FrameHistory.Num() <= 1)
 	{
+		FFRamePackage ThisFrame;
 		SaveFramePackage(ThisFrame);
 		FrameHistory.AddHead(ThisFrame);
 	} else
@@ -270,9 +259,27 @@ void UOFLagCompensationComponent::SaveFramePackage()
 			FrameHistory.RemoveNode(FrameHistory.GetTail());
 			HistoryLength = FrameHistory.GetHead()->GetValue().Time - FrameHistory.GetTail()->GetValue().Time;
 		}
+		
+		FFRamePackage ThisFrame;
 		SaveFramePackage(ThisFrame);
 		FrameHistory.AddHead(ThisFrame);
 		
 		// ShowFramePackage(ThisFrame, FColor::Red);
+	}
+}
+
+void UOFLagCompensationComponent::SaveFramePackage(FFRamePackage& Package)
+{
+	Character = Character == nullptr ? Cast<AOverfrontCharacter>(GetOwner()) : Character;
+	if (Character == nullptr) return;
+	Package.Time = GetWorld()->GetTimeSeconds();
+	for (auto& BoxPair : Character->HitBoxes)
+	{
+		FBoxInformation BoxInfo;
+		BoxInfo.Location = BoxPair.Value->GetComponentLocation();
+		BoxInfo.Rotation = BoxPair.Value->GetComponentRotation();
+		BoxInfo.BoxExtent = BoxPair.Value->GetScaledBoxExtent();
+		
+		Package.HitBoxInfos.Add(BoxPair.Key, BoxInfo);
 	}
 }

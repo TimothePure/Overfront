@@ -102,6 +102,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
 	bool bUseScatter = false;
 	
+	UPROPERTY(EditAnywhere, Category = "Weapon|Damage")
+	TSubclassOf<UDamageType> DamageType;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnWeaponStateSet();
@@ -115,9 +118,6 @@ protected:
 
 	UFUNCTION()
 	void OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComponent,AActor* OtherActor,UPrimitiveComponent* OtherComp,int32 OtherBodyIndex);
-	
-	UPROPERTY(EditAnywhere, Category = "Weapon|Damage")
-	TSubclassOf<UDamageType> DamageType;
 	
 	/** Trace with scatter **/
 	UPROPERTY(EditAnywhere, Category = "Weapon scatter")

@@ -58,20 +58,21 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFRamePackage& Package, const FColor& Color);
 	FServerSideRewindResult ServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
+	
+	UFUNCTION(Server, Reliable)
 	void ServerScoreRequest(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, 
-		float HitTime, class AOFWeapon* DamageCauser);
+		const FName BoneName, float HitTime, class AOFWeapon* DamageCauser);
 protected:
 	virtual void BeginPlay() override;
 	void SaveFramePackage(FFRamePackage& Package);
-	
 	FFRamePackage InterpolateBetweenFrames(const FFRamePackage& OlderFrame, const FFRamePackage& YoungerFrame, float HitTime);
 	FServerSideRewindResult ConfirmHit(const FFRamePackage& Package, AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation);
 	void CacheBoxPositions(AOverfrontCharacter* HitCharacter,  FFRamePackage& OutFramePackage);
 	void MoveHitBoxes(AOverfrontCharacter* HitCharacter, const FFRamePackage& Package);
 	void ResetHitBoxes(AOverfrontCharacter* HitCharacter, const FFRamePackage& Package);
 	void EnableCharacterMeshCollision(AOverfrontCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
-	
 	void SaveFramePackage();
+	
 private: 
 	UPROPERTY()
 	AOverfrontCharacter* Character;
