@@ -15,6 +15,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerState/OFPlayerState.h"
+#include "Weapons/OFWeapon.h"
 #include "Widgets/OFAnnouncementWidget.h"
 #include "Widgets/OFCharacterOverlay.h"
 #include "Widgets/OFDeathWidget.h"
@@ -49,10 +50,20 @@ void AOFPlayerController::OnPossess(APawn* InPawn)
     Super::OnPossess(InPawn);
 
     AOverfrontCharacter* OverfrontCharacter = Cast<AOverfrontCharacter>(InPawn);
-    if (OverfrontCharacter)
+    if (!OverfrontCharacter) return;
+    SetHUDHealth(OverfrontCharacter->GetHealth(), OverfrontCharacter->GetMaxHealth()); 
+    SetHUDShield(OverfrontCharacter->GetShield(), OverfrontCharacter->GetMaxShield());
+    
+    if (OverfrontCharacter->GetEquippedWeapon())
     {
-        SetHUDHealth(OverfrontCharacter->GetHealth(), OverfrontCharacter->GetMaxHealth()); 
-        SetHUDShield(OverfrontCharacter->GetShield(), OverfrontCharacter->GetMaxShield());
+        SetWeaponHUDVisibility(true);
+        SetHUDWeaponType(OverfrontCharacter->GetEquippedWeapon()->GetWeaponType());
+        SetHUDWeaponAmmo(OverfrontCharacter->GetEquippedWeapon()->GetAmmo());
+        SetHUDCarriedAmmo(OverfrontCharacter->GetCarriedAmmo());
+    }
+    else
+    {
+        SetWeaponHUDVisibility(false);
     }
 }
 
@@ -185,6 +196,10 @@ void AOFPlayerController::SetHUDWeaponAmmo(int32 Ammo)
     {
         FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
         HUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
+    } else
+    {
+        PendingHUDData.bPendingData = true;
+        PendingHUDData.WeaponAmmo = Ammo;
     }
 }
 
@@ -196,6 +211,11 @@ void AOFPlayerController::SetHUDCarriedAmmo(int32 Ammo)
     {
         FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
         HUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+    }
+    else
+    {
+        PendingHUDData.bPendingData = true;
+        PendingHUDData.CarriedAmmo = Ammo;
     }
 }
 
@@ -216,6 +236,10 @@ void AOFPlayerController::SetHUDWeaponType(EWeaponType Type)
         }
         
         HUD->CharacterOverlay->WeaponType->SetText(FText::FromString(TypeText));
+    } else
+    {
+        PendingHUDData.bPendingData = true;
+        PendingHUDData.WeaponType = Type;
     }
 }
 
@@ -371,6 +395,23 @@ void AOFPlayerController::InitHUDOverlay()
         SetHUDScore(PendingHUDData.Score);
         SetHUDDefeats(PendingHUDData.Defeats);
         SetHUDGrenades(PendingHUDData.Grenades);
+        SetHUDCarriedAmmo(PendingHUDData.CarriedAmmo);
+        
+        if (PendingHUDData.CarriedAmmo >= 0)
+        {
+            SetHUDCarriedAmmo(PendingHUDData.CarriedAmmo);
+        }
+
+        if (PendingHUDData.WeaponAmmo >= 0)
+        {
+            SetHUDWeaponAmmo(PendingHUDData.WeaponAmmo);
+        }
+
+        if (PendingHUDData.WeaponType != EWeaponType::EWT_MAX)
+        {
+            SetHUDWeaponType(PendingHUDData.WeaponType);
+        }
+        
         PendingHUDData = FPendingHUDData();
     }
 }

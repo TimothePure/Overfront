@@ -14,13 +14,19 @@ struct FPendingHUDData
 	GENERATED_BODY()
 
 	bool bPendingData = false;
+	
 	float Health;
 	float MaxHealth;
 	float Shield;
 	float MaxShield;
+	
 	float Score = 0.f;
 	int32 Defeats = 0;
+	
 	int32 Grenades = 0;
+	int32 CarriedAmmo = -1;
+	int32 WeaponAmmo = -1;
+	EWeaponType WeaponType = EWeaponType::EWT_MAX;
 };
 
 /**

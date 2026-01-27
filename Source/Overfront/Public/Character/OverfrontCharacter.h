@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/OFCombatComponent.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/OFInteractWithCrosshairInterface.h"
 #include "Overfront/Enums/OFCombatStates.h"
@@ -88,7 +89,8 @@ public:
 
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
-
+	void UpdateHUDWeapon();	
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
@@ -352,4 +354,5 @@ public:
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 	bool IsLocallyReloading();
 	FORCEINLINE UOFLagCompensationComponent* GetLagCompensationComponent() { return LagCompensationComponent; }
+	float GetCarriedAmmo();
 };

@@ -239,6 +239,7 @@ void AOverfrontCharacter::BeginPlay()
 	
 	UpdateHUDHealth();
 	UpdateHUDShield();
+	UpdateHUDWeapon();
 	
 	if (OFPlayerController)
 	{
@@ -885,6 +886,20 @@ void AOverfrontCharacter::UpdateHUDShield()
 	}
 }
 
+void AOverfrontCharacter::UpdateHUDWeapon()
+{
+	OFPlayerController = OFPlayerController == nullptr ? Cast<AOFPlayerController>(GetController()) : OFPlayerController;
+	if (OFPlayerController && CombatComponent)
+	{
+		OFPlayerController->SetWeaponHUDVisibility(GetEquippedWeapon() != nullptr);
+		if (GetEquippedWeapon())
+		{
+			OFPlayerController->SetHUDWeaponType(GetEquippedWeapon()->GetWeaponType());
+		}
+		OFPlayerController->SetHUDCarriedAmmo(CombatComponent->CarriedAmmo);
+	}
+}
+
 #pragma endregion PlayerStats
 
 #pragma region Getters
@@ -922,6 +937,12 @@ bool AOverfrontCharacter::IsLocallyReloading()
 {
 	if (!CombatComponent) return false;
 	return CombatComponent->bLocallyReloading;
+}
+
+float AOverfrontCharacter::GetCarriedAmmo()
+{
+	if (CombatComponent == nullptr) return -1;
+	return CombatComponent->CarriedAmmo;
 }
 #pragma endregion Getters
 
