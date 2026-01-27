@@ -436,6 +436,7 @@ void UOFCombatComponent::SetAiming(bool bIsAiming)
 	if (Character->IsLocallyControlled() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
 	{
 		Character->ShowSniperScopeWidget(bIsAiming);
+		Character->CurrentSensitivity = Character->MouseSensitivity * (bIsAiming ? Character->SniperSensitivityMultiplier : 1);
 	}
 	
 	if (Character->IsLocallyControlled()) bAimButtonPressed = bIsAiming;

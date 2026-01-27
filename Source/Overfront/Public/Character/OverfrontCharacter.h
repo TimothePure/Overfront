@@ -96,7 +96,16 @@ public:
 
 	UPROPERTY()
 	TMap<FName, class UBoxComponent*> HitBoxes;
+	
+	UPROPERTY(EditAnywhere, Category = "PlayerSettings")
+	float MouseSensitivity = 0.5f;
+	
+	UPROPERTY(EditAnywhere, Category = "PlayerSettings")
+	float SniperSensitivityMultiplier = 0.4f;
 
+	UPROPERTY()
+	float CurrentSensitivity;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;

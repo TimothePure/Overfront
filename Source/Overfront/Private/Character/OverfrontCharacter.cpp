@@ -228,6 +228,8 @@ void AOverfrontCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	CurrentSensitivity = MouseSensitivity;
+	
 	// Called inside BeginPlay and Controller->OnRep_PlayerState to ensure that the HUD is setup correctly
 	if (AOFPlayerState* PS = GetPlayerState<AOFPlayerState>())
 	{
@@ -360,8 +362,8 @@ void AOverfrontCharacter::DoLook(float Yaw, float Pitch)
 {
 	if (GetController() != nullptr)
 	{
-		AddControllerYawInput(Yaw);
-		AddControllerPitchInput(Pitch);
+		AddControllerYawInput(Yaw * CurrentSensitivity);
+		AddControllerPitchInput(Pitch * CurrentSensitivity);
 	}
 }
 
