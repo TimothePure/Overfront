@@ -294,7 +294,6 @@ void AOFWeapon::OnDropped()
 	WeaponMesh->SetCollisionResponseToAllChannels(ECR_Block);
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	ShowPickupWidget(true);
 	EnableCustomDepth(true);
 }
 

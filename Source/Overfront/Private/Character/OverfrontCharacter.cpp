@@ -616,6 +616,8 @@ void AOverfrontCharacter::TurnInPlace(float DeltaTime)
 
 void AOverfrontCharacter::OnRep_OverlappingWeapon(AOFWeapon* LastWeapon) const
 {
+	if (!IsLocallyControlled()) return;
+	
 	if (LastWeapon)
 	{
 		LastWeapon->ShowPickupWidget(false);
@@ -771,6 +773,7 @@ void AOverfrontCharacter::HandleRadialDamage(AActor* DamagedActor, float Damage,
 // Called by the GameMode so only on the server
 void AOverfrontCharacter::OnEliminated(float Delay)
 {
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DropOrDestroyWeapons();
 	MulticastOnEliminated();
 	GetWorldTimerManager().SetTimer(EliminationTimerHandle, this, &ThisClass::EliminationTimerFinished, Delay);
@@ -829,6 +832,7 @@ void AOverfrontCharacter::DropOrDestroyWeapons()
 		CombatComponent->SecondaryWeapon = nullptr;
 	}
 	
+	SetOverlappingWeapon(nullptr);
 }
 
 #pragma endregion Combat
