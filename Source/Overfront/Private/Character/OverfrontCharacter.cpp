@@ -779,6 +779,10 @@ void AOverfrontCharacter::OnEliminated(float Delay)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DropOrDestroyWeapons();
 	MulticastOnEliminated();
+	if (CombatComponent)
+	{
+		CombatComponent->FireInput(false);
+	}
 	GetWorldTimerManager().SetTimer(EliminationTimerHandle, this, &ThisClass::EliminationTimerFinished, Delay);
 }
 
