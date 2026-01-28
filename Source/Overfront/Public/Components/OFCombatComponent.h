@@ -245,4 +245,5 @@ private:
 public:
 	FORCEINLINE float GetRecoilOffset() const { return RecoilOffset; }
 	FORCEINLINE bool ShouldSwapWeapons() const { return EquippedWeapon != nullptr && SecondaryWeapon != nullptr; }
+	FORCEINLINE float GetGrenades() const { return Grenades; }
 };

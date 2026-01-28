@@ -53,6 +53,7 @@ void AOFPlayerController::OnPossess(APawn* InPawn)
     if (!OverfrontCharacter) return;
     SetHUDHealth(OverfrontCharacter->GetHealth(), OverfrontCharacter->GetMaxHealth()); 
     SetHUDShield(OverfrontCharacter->GetShield(), OverfrontCharacter->GetMaxShield());
+    SetHUDGrenades(OverfrontCharacter->GetCombatComponent()->GetGrenades());
     
     if (OverfrontCharacter->GetEquippedWeapon())
     {
@@ -233,6 +234,7 @@ void AOFPlayerController::SetHUDWeaponType(EWeaponType Type)
         } else
         {
             TypeText = EnumPtr->GetDisplayNameTextByValue(static_cast<int64>(Type)).ToString();
+            TypeText.RemoveFromStart(TEXT("EWT_"));
         }
         
         HUD->CharacterOverlay->WeaponType->SetText(FText::FromString(TypeText));
