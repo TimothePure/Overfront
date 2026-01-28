@@ -777,12 +777,13 @@ void AOverfrontCharacter::HandleRadialDamage(AActor* DamagedActor, float Damage,
 void AOverfrontCharacter::OnEliminated(float Delay)
 {
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	DropOrDestroyWeapons();
-	MulticastOnEliminated();
 	if (CombatComponent)
 	{
 		CombatComponent->FireInput(false);
+		CombatComponent->SetAiming(false);
 	}
+	DropOrDestroyWeapons();
+	MulticastOnEliminated();
 	GetWorldTimerManager().SetTimer(EliminationTimerHandle, this, &ThisClass::EliminationTimerFinished, Delay);
 }
 
