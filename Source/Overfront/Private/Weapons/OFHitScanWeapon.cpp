@@ -35,11 +35,13 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 				FVector ShotDirection = (HitTarget - Start).GetSafeNormal();
 				if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
 				{
-					if (HasAuthority() && !bUseServerSideRewind)
+					if (HasAuthority())
 					{
+						if (bUseServerSideRewind && OwnerPawn && !OwnerPawn->IsLocallyControlled()) return;
+						
 						UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, ShotDirection, FireHit, InstigatorController, this, DamageType);
 					}
-					else if (bUseServerSideRewind && !HasAuthority())
+					else if (bUseServerSideRewind)
 					{
 						OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(OwnerPawn) : OwnerCharacter;
 						OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(InstigatorController): OwnerPlayerController;
