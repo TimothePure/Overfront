@@ -64,14 +64,20 @@ public:
 		const FName BoneName, float HitTime, class AOFWeapon* DamageCauser);
 protected:
 	virtual void BeginPlay() override;
+	
+	void SaveFramePackage();
 	void SaveFramePackage(FFRamePackage& Package);
+	
 	FFRamePackage InterpolateBetweenFrames(const FFRamePackage& OlderFrame, const FFRamePackage& YoungerFrame, float HitTime);
 	FServerSideRewindResult ConfirmHit(const FFRamePackage& Package, AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation);
+	
 	void CacheBoxPositions(AOverfrontCharacter* HitCharacter,  FFRamePackage& OutFramePackage);
 	void MoveHitBoxes(AOverfrontCharacter* HitCharacter, const FFRamePackage& Package);
 	void ResetHitBoxes(AOverfrontCharacter* HitCharacter, const FFRamePackage& Package);
 	void EnableCharacterMeshCollision(AOverfrontCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
-	void SaveFramePackage();
+
+	/** Shotgun **/ 
+	FFRamePackage GetFrameToCheck(AOverfrontCharacter* HitCharacter, float HitTime);
 	
 private: 
 	UPROPERTY()

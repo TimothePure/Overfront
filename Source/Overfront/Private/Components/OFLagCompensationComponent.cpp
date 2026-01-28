@@ -20,7 +20,7 @@ void UOFLagCompensationComponent::BeginPlay()
 	
 	FFRamePackage Package;
 	SaveFramePackage(Package);
-	ShowFramePackage(Package, FColor::Orange);
+	// ShowFramePackage(Package, FColor::Orange);
 }
 
 void UOFLagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -41,57 +41,54 @@ void UOFLagCompensationComponent::ShowFramePackage(const FFRamePackage& Package,
 FServerSideRewindResult UOFLagCompensationComponent::ServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
 	const FVector_NetQuantize& HitLocation, float HitTime)
 {
+	FFRamePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
+	
+	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
+}
+
+FFRamePackage UOFLagCompensationComponent::GetFrameToCheck(AOverfrontCharacter* HitCharacter, float HitTime)
+{
 	if (HitCharacter == nullptr || HitCharacter->GetLagCompensationComponent() == nullptr || 
 		HitCharacter->GetLagCompensationComponent()->FrameHistory.GetHead() == nullptr || 
-		HitCharacter->GetLagCompensationComponent()->FrameHistory.GetTail() == nullptr) return FServerSideRewindResult();
-	
-	FFRamePackage FrameToCheck;
-	bool bShouldInterpolate = true;
+		HitCharacter->GetLagCompensationComponent()->FrameHistory.GetTail() == nullptr) return FFRamePackage();
 	
 	const TDoubleLinkedList<FFRamePackage>& HitCharacterHistory = HitCharacter->GetLagCompensationComponent()->FrameHistory;
 	const float OldestHistoryTime = HitCharacterHistory.GetTail()->GetValue().Time;
 	const float NewestHistoryTime = HitCharacterHistory.GetHead()->GetValue().Time;
-	if (OldestHistoryTime > HitTime) return FServerSideRewindResult(); // Too far back - too laggy for SSR
+	
+	if (OldestHistoryTime > HitTime) return FFRamePackage(); // Too far back - too laggy for SSR
 	if (OldestHistoryTime == HitTime )
 	{
-		FrameToCheck = HitCharacterHistory.GetHead()->GetValue();
+		return HitCharacterHistory.GetHead()->GetValue();
 	}
-	else if (NewestHistoryTime <= HitTime) 
+	if (NewestHistoryTime <= HitTime) 
 	{
-		FrameToCheck = HitCharacterHistory.GetHead()->GetValue();
+		return HitCharacterHistory.GetHead()->GetValue();
 	}
-	else
+	
+	TDoubleLinkedList<FFRamePackage>::TDoubleLinkedListNode* Younger = HitCharacterHistory.GetHead();
+	TDoubleLinkedList<FFRamePackage>::TDoubleLinkedListNode* Older = Younger;
+	
+	while (Older->GetValue().Time > HitTime)
 	{
-		TDoubleLinkedList<FFRamePackage>::TDoubleLinkedListNode* Younger = HitCharacterHistory.GetHead();
-		TDoubleLinkedList<FFRamePackage>::TDoubleLinkedListNode* Older = Younger;
+		// March back until: Older.Time < HitTime < YoungerTime
+		if (Older->GetNextNode() == nullptr) break;
 		
-		while (Older->GetValue().Time > HitTime)
-		{
-			// March back until: Older.Time < HitTime < YoungerTime
-			if (Older->GetNextNode() == nullptr) break;
-			
-			Older = Older->GetNextNode();
-			
-			if (Older->GetValue().Time > HitTime)
-			{
-				Younger = Older;
-			}
-		}
+		Older = Older->GetNextNode();
 		
-		if (Older->GetValue().Time == HitTime) // Highly unlikely but we found the frame to check
+		if (Older->GetValue().Time > HitTime)
 		{
-			FrameToCheck = Older->GetValue();
-			bShouldInterpolate = false;
-		}
-		
-		if (bShouldInterpolate)
-		{
-			// Interpolate between Older and Younger
-			FrameToCheck = InterpolateBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
+			Younger = Older;
 		}
 	}
 	
-	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
+	if (Older->GetValue().Time == HitTime) // Highly unlikely but we found the frame to check
+	{
+		return Older->GetValue();
+	}
+	
+	// Interpolate between Older and Younger
+	return InterpolateBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
 }
 
 void UOFLagCompensationComponent::ServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
@@ -138,7 +135,7 @@ FFRamePackage UOFLagCompensationComponent::InterpolateBetweenFrames(const FFRame
 FServerSideRewindResult UOFLagCompensationComponent::ConfirmHit(const FFRamePackage& Package, AOverfrontCharacter* HitCharacter, 
 	const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation)
 {
-	if (HitCharacter == nullptr) return FServerSideRewindResult();
+	if (HitCharacter == nullptr || Package.HitBoxInfos.Num() == 0) return FServerSideRewindResult();
 	
 	FFRamePackage CurrentFrame;
 	CacheBoxPositions(HitCharacter, CurrentFrame);

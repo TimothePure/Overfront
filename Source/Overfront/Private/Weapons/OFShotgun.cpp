@@ -4,10 +4,12 @@
 #include "Weapons/OFShotgun.h"
 
 #include "Character/OverfrontCharacter.h"
+#include "Components/OFLagCompensationComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "PlayerController/OFPlayerController.h"
 #include "Weapons/Damage/OFWeaponDamageType.h"
 
 
@@ -47,7 +49,11 @@ void AOFShotgun::FireShotgun(const TArray<FVector_NetQuantize> HitTargets)
 				{
 					if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
 					{
-						UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, (HitTarget - Start).GetSafeNormal(), FireHit, InstigatorController, this, DamageType);
+						
+						OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
+								OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime,this);
+						
+						//UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, (HitTarget - Start).GetSafeNormal(), FireHit, InstigatorController, this, DamageType);
 					}
 				}
 
