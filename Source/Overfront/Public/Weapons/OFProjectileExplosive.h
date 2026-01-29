@@ -32,6 +32,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Projectile|Properties")
 	UStaticMeshComponent* ProjectileMesh;
 	
+	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
+	UParticleSystem* ExplodeParticles;
+	
+	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
+	USoundBase* ExplodeSound;
+	
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true), Category = "Projectile|Damage")
 	float DamageInnerRadius = 100.f;
 

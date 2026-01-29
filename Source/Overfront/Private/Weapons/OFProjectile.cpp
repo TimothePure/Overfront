@@ -4,11 +4,13 @@
 #include "Weapons/OFProjectile.h"
 
 #include "NiagaraFunctionLibrary.h"
+#include "Character/OverfrontCharacter.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Overfront/Overfront.h"
 #include "Sound/SoundBase.h"
+#include "Weapons/ImpactResolver.h"
 
 AOFProjectile::AOFProjectile()
 {
@@ -38,20 +40,18 @@ void AOFProjectile::BeginPlay()
 void AOFProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& HitResult)
 {
+	ProjectileHitResult = HitResult;
+	
 	Destroy();
 }
 
 void AOFProjectile::Destroyed()
 {
+	AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(ProjectileHitResult.GetActor());
+	FImpactContext Context { ProjectileHitResult, (HitCharacter != nullptr) };
+	UImpactResolver::ResolveImpactFX(GetWorld(), Context, ImpactData);
+	
 	Super::Destroyed();
-	if (ImpactParticles)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
-	}
-	if (ImpactSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
-	}
 }
 
 void AOFProjectile::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

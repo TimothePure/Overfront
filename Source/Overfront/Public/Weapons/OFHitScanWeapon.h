@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "OFWeapon.h"
+#include "Overfront/Data/DA_ProjectileImpactsFX.h"
 #include "OFHitScanWeapon.generated.h"
+
 
 UCLASS()
 class OVERFRONT_API AOFHitScanWeapon : public AOFWeapon
@@ -18,13 +20,10 @@ protected:
 	void WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
 	
 	UPROPERTY(EditAnywhere)
-	UParticleSystem* ImpactParticles;
+	UDA_ProjectileImpactsFX* ImpactData;
 	
 	UPROPERTY(EditAnywhere)
 	USoundBase* FireSound;
-
-	UPROPERTY(EditAnywhere)
-	USoundBase* HitSound;
 
 private:
 	UPROPERTY(EditAnywhere)

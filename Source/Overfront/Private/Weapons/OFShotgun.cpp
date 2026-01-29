@@ -10,6 +10,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "PlayerController/OFPlayerController.h"
+#include "Weapons/ImpactResolver.h"
 #include "Weapons/Damage/OFWeaponDamageType.h"
 
 
@@ -44,27 +45,34 @@ void AOFShotgun::FireShotgun(const TArray<FVector_NetQuantize> HitTargets)
 
 			if (FireHit.bBlockingHit)
 			{
+				FVector ShotDirection = (HitTarget - Start).GetSafeNormal();
 				AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor());
-				if (HitCharacter && HasAuthority() && InstigatorController)
+				if (HitCharacter && InstigatorController)
 				{
 					if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
 					{
+						if (HasAuthority())
+						{
+							if (bUseServerSideRewind && OwnerPawn && !OwnerPawn->IsLocallyControlled()) return;
 						
-						OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
-								OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime,this);
+							UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, ShotDirection, FireHit, InstigatorController, this, DamageType);
+						}
+						else if (bUseServerSideRewind)
+						{
+							OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(OwnerPawn) : OwnerCharacter;
+							OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(InstigatorController): OwnerPlayerController;
 						
-						//UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, (HitTarget - Start).GetSafeNormal(), FireHit, InstigatorController, this, DamageType);
+							if (OwnerCharacter && OwnerPlayerController && OwnerCharacter->GetLagCompensationComponent())
+							{
+								OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
+									OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime,this);
+							}
+						}
 					}
 				}
-
-				if (ImpactParticles)
-				{
-					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, FireHit.ImpactPoint, FireHit.ImpactNormal.Rotation());
-				}
-				if (HitSound)
-				{
-					UGameplayStatics::PlaySoundAtLocation(this, HitSound, FireHit.ImpactPoint, 0.5f, FMath::FRandRange(-0.5f, 0.5f));
-				}
+				
+				FImpactContext Context { FireHit, (HitCharacter != nullptr) };
+				UImpactResolver::ResolveImpactFX(GetWorld(), Context, ImpactData);
 			}
 		}
 	}

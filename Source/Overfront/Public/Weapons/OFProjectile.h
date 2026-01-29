@@ -26,14 +26,14 @@ protected:
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult);
 
+	UPROPERTY()
+	FHitResult ProjectileHitResult;
+	
 	UPROPERTY(EditAnywhere, Category = "Projectile|Damage")
 	float BaseDamage = 20.f;
 	
 	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
-	UParticleSystem* ImpactParticles;
-
-	UPROPERTY(EditAnywhere, Category = "Projectile|Properties")
-	USoundBase* ImpactSound;
+	class UDA_ProjectileImpactsFX* ImpactData;
 
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* CollisionBox;

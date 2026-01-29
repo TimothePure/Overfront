@@ -12,6 +12,7 @@
 #include "DrawDebugHelpers.h"
 #include "Components/OFLagCompensationComponent.h"
 #include "PlayerController/OFPlayerController.h"
+#include "Weapons/ImpactResolver.h"
 
 void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -51,18 +52,12 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 							OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
 								OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime,this);
 						}
-					} 
+					}
 				}
 			}
 			
-			if (ImpactParticles)
-			{
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, FireHit.ImpactPoint, FireHit.ImpactNormal.Rotation());
-			}
-			if (HitSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, HitSound, FireHit.ImpactPoint);
-			}
+			FImpactContext Context { FireHit, (HitCharacter != nullptr) };
+			UImpactResolver::ResolveImpactFX(GetWorld(), Context, ImpactData);
 		}
 
 		if (MuzzleFlash)

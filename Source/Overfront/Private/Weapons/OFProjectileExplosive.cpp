@@ -50,13 +50,13 @@ void AOFProjectileExplosive::Explode()
 	
 	StartDestroyTimer();
 
-	if (ImpactParticles)
+	if (ExplodeParticles)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplodeParticles, GetActorTransform());
 	}
-	if (ImpactSound)
+	if (ExplodeSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, ExplodeSound, GetActorLocation());
 	}
 	if (ProjectileMesh)
 	{
