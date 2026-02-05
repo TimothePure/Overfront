@@ -15,13 +15,10 @@ public:
 	AOFProjectileWeapon();
 	virtual void Fire(const FVector& HitTarget) override;
 
-protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void Tick(float DeltaTime) override;
-
 private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AOFProjectile> ProjectileClass;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AOFProjectile> NotReplicatedProjectileClass;
 };

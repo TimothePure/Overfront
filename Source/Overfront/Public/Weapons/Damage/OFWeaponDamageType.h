@@ -26,4 +26,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Damage")
 	float LimbsDamage = 15.f;
+	
+	float DetermineDamageAmount(FName BoneName);
 };

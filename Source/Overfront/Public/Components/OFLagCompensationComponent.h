@@ -42,7 +42,7 @@ struct FServerSideRewindResult
 	bool bHitConfirmed;
 	
 	UPROPERTY()
-	bool bHeadshot;
+	FName HitBoxName = NAME_None;
 };
 
 class AOverfrontCharacter;
@@ -57,11 +57,21 @@ public:
 	friend class AOverfrontCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFRamePackage& Package, const FColor& Color);
+	
+	/** Hitscan **/
 	FServerSideRewindResult ServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
+	
+	/** Projectiles **/
+	FServerSideRewindResult ProjectileServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime);
 	
 	UFUNCTION(Server, Reliable)
 	void ServerScoreRequest(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, 
 		const FName BoneName, float HitTime, class AOFWeapon* DamageCauser);
+	
+	UFUNCTION(Server, Reliable)
+	void ProjectileServerScoreRequest(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, 
+		const FName BoneName, float HitTime, TSubclassOf<UDamageType> DamageType);
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -69,13 +79,18 @@ protected:
 	void SaveFramePackage(FFRamePackage& Package);
 	
 	FFRamePackage InterpolateBetweenFrames(const FFRamePackage& OlderFrame, const FFRamePackage& YoungerFrame, float HitTime);
-	FServerSideRewindResult ConfirmHit(const FFRamePackage& Package, AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation);
 	
 	void CacheBoxPositions(AOverfrontCharacter* HitCharacter,  FFRamePackage& OutFramePackage);
 	void MoveHitBoxes(AOverfrontCharacter* HitCharacter, const FFRamePackage& Package);
 	void ResetHitBoxes(AOverfrontCharacter* HitCharacter, const FFRamePackage& Package);
 	void EnableCharacterMeshCollision(AOverfrontCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
 
+	/** Hitscan **/
+	FServerSideRewindResult ConfirmHit(const FFRamePackage& Package, AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation);
+	
+	/** Projectile **/
+	FServerSideRewindResult ProjectileConfirmHit(const FFRamePackage& Package,AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime);
+	
 	/** Shotgun **/ 
 	FFRamePackage GetFrameToCheck(AOverfrontCharacter* HitCharacter, float HitTime);
 	
