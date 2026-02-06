@@ -33,14 +33,13 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 			AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor());
 			if (HitCharacter && InstigatorController)
 			{
-				FVector ShotDirection = (HitTarget - Start).GetSafeNormal();
 				if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
 				{
 					if (HasAuthority())
 					{
 						if (bUseServerSideRewind && OwnerPawn && !OwnerPawn->IsLocallyControlled()) return;
-						
-						UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, ShotDirection, FireHit, InstigatorController, this, DamageType);
+
+						UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(FireHit.BoneName), InstigatorController, this, DamageType);
 					}
 					else if (bUseServerSideRewind)
 					{

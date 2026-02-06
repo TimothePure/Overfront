@@ -11,6 +11,7 @@
 #include "Components/OFLagCompensationComponent.h"
 #include "Particles/ParticleSystem.h"
 #include "PlayerController/OFPlayerController.h"
+#include "Weapons/OFWeapon.h"
 #include "Weapons/Damage/OFWeaponDamageType.h"
 
 AOFProjectileBullet::AOFProjectileBullet() 
@@ -80,12 +81,11 @@ void AOFProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 		if (HasAuthority())
 		{
 			if (bUseServerSideRewind && OwnerController->IsLocalController()) return;
-			FVector ShotDirection = (HitResult.ImpactPoint - StartLocation).GetSafeNormal();
-			UGameplayStatics::ApplyPointDamage(OtherActor, WeaponDamage->BaseDamage, ShotDirection, HitResult, OwnerController, this, DamageType);
+			AOFWeapon* WeaponInstigator = Cast<AOFWeapon>(GetOwner());
+			UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(HitResult.BoneName), OwnerController, WeaponInstigator, WeaponInstigator->DamageType);
 		}
 		else if (bUseServerSideRewind && OwnerCharacter->GetLagCompensationComponent())
 		{
-			
 			OwnerCharacter->GetLagCompensationComponent()->ProjectileServerScoreRequest(HitCharacter, StartLocation, HitResult.ImpactPoint, HitResult.BoneName,
 				OwnerController->GetServerTime() - OwnerController->SingleTripTime, GetOwningWeapon());
 		}

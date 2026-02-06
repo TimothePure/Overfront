@@ -38,6 +38,19 @@ void UOFLagCompensationComponent::ShowFramePackage(const FFRamePackage& Package,
 		DrawDebugBox(GetWorld(), BoxInfo.Value.Location, BoxInfo.Value.BoxExtent, FQuat(BoxInfo.Value.Rotation), Color, false, 4.f);
 	}
 }
+void UOFLagCompensationComponent::HitscanServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize& HitLocation, const FName BoneName, float HitTime,  AOFWeapon* DamageCauser)
+{
+	FServerSideRewindResult Confirm = HitscanServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
+	
+	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed)
+	{
+		if (UOFWeaponDamageType* WeaponDamage = DamageCauser->DamageType->GetDefaultObject<UOFWeaponDamageType>())
+		{
+			UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(Confirm.HitBoxName), Character->Controller, DamageCauser, DamageCauser->DamageType);
+		}
+	}
+}
 
 FServerSideRewindResult UOFLagCompensationComponent::HitscanServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
 	const FVector_NetQuantize& HitLocation, float HitTime)
@@ -45,6 +58,20 @@ FServerSideRewindResult UOFLagCompensationComponent::HitscanServerSideRewind(AOv
 	FFRamePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
 	
 	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
+}
+
+void UOFLagCompensationComponent::ProjectileServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
+	const FVector_NetQuantize100& InitialVelocity, const FName BoneName, float HitTime, AOFWeapon* DamageCauser)
+{
+	FServerSideRewindResult Confirm = ProjectileServerSideRewind(HitCharacter, TraceStart, InitialVelocity, HitTime);
+	
+	if (Character && HitCharacter && Confirm.bHitConfirmed)
+	{
+		if (UOFWeaponDamageType* WeaponDamage = DamageCauser->DamageType->GetDefaultObject<UOFWeaponDamageType>())
+		{
+			UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(Confirm.HitBoxName), Character->Controller, DamageCauser, DamageCauser->DamageType);
+		}
+	}
 }
 
 FServerSideRewindResult UOFLagCompensationComponent::ProjectileServerSideRewind(AOverfrontCharacter* HitCharacter,
@@ -98,34 +125,6 @@ FFRamePackage UOFLagCompensationComponent::GetFrameToCheck(AOverfrontCharacter* 
 	
 	// Interpolate between Older and Younger
 	return InterpolateBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
-}
-
-void UOFLagCompensationComponent::HitscanServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
-	const FVector_NetQuantize& HitLocation, const FName BoneName, float HitTime,  AOFWeapon* DamageCauser)
-{
-	FServerSideRewindResult Confirm = HitscanServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
-	
-	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed)
-	{
-		if (UOFWeaponDamageType* WeaponDamage = DamageCauser->DamageType->GetDefaultObject<UOFWeaponDamageType>())
-		{
-			UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(Confirm.HitBoxName), Character->Controller, DamageCauser, DamageCauser->DamageType);
-		}
-	}
-}
-
-void UOFLagCompensationComponent::ProjectileServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
-	const FVector_NetQuantize100& InitialVelocity, const FName BoneName, float HitTime, AOFWeapon* DamageCauser)
-{
-	FServerSideRewindResult Confirm = ProjectileServerSideRewind(HitCharacter, TraceStart, InitialVelocity, HitTime);
-	
-	if (Character && HitCharacter && Confirm.bHitConfirmed)
-	{
-		if (UOFWeaponDamageType* WeaponDamage = DamageCauser->DamageType->GetDefaultObject<UOFWeaponDamageType>())
-		{
-			UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(Confirm.HitBoxName), Character->Controller, DamageCauser, DamageCauser->DamageType);
-		}
-	}
 }
 
 FFRamePackage UOFLagCompensationComponent::InterpolateBetweenFrames(const FFRamePackage& OlderFrame, const FFRamePackage& YoungerFrame, float HitTime)

@@ -243,8 +243,7 @@ void AOverfrontCharacter::BeginPlay()
 	
 	if (HasAuthority())
 	{
-		OnTakePointDamage.AddDynamic(this, &AOverfrontCharacter::HandlePointDamage);
-		OnTakeRadialDamage.AddDynamic(this, &AOverfrontCharacter::HandleRadialDamage);
+		OnTakeAnyDamage.AddDynamic(this, &AOverfrontCharacter::ReceiveDamage);
 	}
 	
 	if (AttachedGrenade)
@@ -734,39 +733,6 @@ void AOverfrontCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, cons
 		}
 	}
 }
-
-void AOverfrontCharacter::HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatorController, FVector HitLocation,
-	UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser)
-{
-	const UOFWeaponDamageType* WeaponDamageType = Cast<UOFWeaponDamageType>(DamageType);
-	
-	if (!WeaponDamageType) return;
-	
-	float FinalDamage = WeaponDamageType->BaseDamage;
-	
-	// Hit zone detection
-	if (BoneName == FName("head"))
-	{
-		FinalDamage = WeaponDamageType->HeadDamage;
-	}
-	else if (BoneName == FName("pelvis") || BoneName.ToString().Contains("spine"))
-	{
-		FinalDamage = WeaponDamageType->TorsoDamage;
-	}
-	else
-	{
-		FinalDamage = WeaponDamageType->LimbsDamage;
-	}
-	
-	ReceiveDamage(DamagedActor, FinalDamage, DamageType, InstigatorController, DamageCauser);
-}
-
-void AOverfrontCharacter::HandleRadialDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
-	FVector Origin, const FHitResult& HitInfo, AController* InstigatorController, AActor* DamageCauser)
-{
-	ReceiveDamage(DamagedActor, Damage, DamageType, InstigatorController, DamageCauser);
-}
-
 
 // Called by the GameMode so only on the server
 void AOverfrontCharacter::OnEliminated(float Delay)
