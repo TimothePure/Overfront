@@ -22,7 +22,6 @@ AOFShotgun::AOFShotgun()
 void AOFShotgun::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void AOFShotgun::FireShotgun(const TArray<FVector_NetQuantize> HitTargets)
@@ -64,7 +63,7 @@ void AOFShotgun::FireShotgun(const TArray<FVector_NetQuantize> HitTargets)
 						
 							if (OwnerCharacter && OwnerPlayerController && OwnerCharacter->GetLagCompensationComponent())
 							{
-								OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
+								OwnerCharacter->GetLagCompensationComponent()->HitscanServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
 									OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime,this);
 							}
 						}

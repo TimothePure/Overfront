@@ -39,7 +39,7 @@ void UOFLagCompensationComponent::ShowFramePackage(const FFRamePackage& Package,
 	}
 }
 
-FServerSideRewindResult UOFLagCompensationComponent::ServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
+FServerSideRewindResult UOFLagCompensationComponent::HitscanServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
 	const FVector_NetQuantize& HitLocation, float HitTime)
 {
 	FFRamePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
@@ -100,10 +100,10 @@ FFRamePackage UOFLagCompensationComponent::GetFrameToCheck(AOverfrontCharacter* 
 	return InterpolateBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
 }
 
-void UOFLagCompensationComponent::ServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
+void UOFLagCompensationComponent::HitscanServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
 	const FVector_NetQuantize& HitLocation, const FName BoneName, float HitTime,  AOFWeapon* DamageCauser)
 {
-	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
+	FServerSideRewindResult Confirm = HitscanServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
 	
 	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed)
 	{
@@ -115,13 +115,13 @@ void UOFLagCompensationComponent::ServerScoreRequest_Implementation(AOverfrontCh
 }
 
 void UOFLagCompensationComponent::ProjectileServerScoreRequest_Implementation(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, 
-	const FVector_NetQuantize100& InitialVelocity, const FName BoneName, float HitTime, TSubclassOf<UDamageType> DamageType)
+	const FVector_NetQuantize100& InitialVelocity, const FName BoneName, float HitTime, AOFWeapon* DamageCauser)
 {
 	FServerSideRewindResult Confirm = ProjectileServerSideRewind(HitCharacter, TraceStart, InitialVelocity, HitTime);
 	
 	if (Character && HitCharacter && Confirm.bHitConfirmed)
 	{
-		if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
+		if (UOFWeaponDamageType* WeaponDamage = DamageCauser->DamageType->GetDefaultObject<UOFWeaponDamageType>())
 		{
 			UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(Confirm.HitBoxName), Character->Controller, DamageCauser, DamageCauser->DamageType);
 		}

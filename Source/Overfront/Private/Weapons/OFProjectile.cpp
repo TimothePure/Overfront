@@ -11,6 +11,7 @@
 #include "Overfront/Overfront.h"
 #include "Sound/SoundBase.h"
 #include "Weapons/ImpactResolver.h"
+#include "Weapons/OFWeapon.h"
 
 AOFProjectile::AOFProjectile()
 {
@@ -25,6 +26,11 @@ AOFProjectile::AOFProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
+}
+
+AOFWeapon* AOFProjectile::GetOwningWeapon() const
+{
+	return Cast<AOFWeapon>(GetOwner());
 }
 
 void AOFProjectile::BeginPlay()

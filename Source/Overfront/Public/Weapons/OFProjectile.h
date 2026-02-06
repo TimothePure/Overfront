@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "OFProjectile.generated.h"
 
+class AOFWeapon;
+
 UCLASS(Abstract)
 class OVERFRONT_API AOFProjectile : public AActor
 {
@@ -27,6 +29,8 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float InitialSpeed = 15000;
+
+	AOFWeapon* GetOwningWeapon() const;
 	
 protected:
 	virtual void BeginPlay() override;

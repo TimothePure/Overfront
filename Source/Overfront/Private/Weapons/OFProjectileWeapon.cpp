@@ -37,7 +37,7 @@ void AOFProjectileWeapon::Fire(const FVector& HitTarget)
 	FRotator TargetRotation = ToTarget.Rotation();
 	
 	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = GetOwner();
+	SpawnParams.Owner = this;
 	SpawnParams.Instigator = InstigatorPawn;
 	
 	AOFProjectile* SpawnedProjectile = nullptr;

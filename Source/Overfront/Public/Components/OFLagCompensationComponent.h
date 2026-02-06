@@ -58,19 +58,19 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFRamePackage& Package, const FColor& Color);
 	
-	/** Hitscan **/
-	FServerSideRewindResult ServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
+	/** Hitscan weapons **/
+	FServerSideRewindResult HitscanServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
+
+	UFUNCTION(Server, Reliable)
+	void HitscanServerScoreRequest(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, 
+		const FName BoneName, float HitTime, class AOFWeapon* DamageCauser);
 	
-	/** Projectiles **/
+	/** Projectiles weapons **/
 	FServerSideRewindResult ProjectileServerSideRewind(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime);
 	
 	UFUNCTION(Server, Reliable)
-	void ServerScoreRequest(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, 
-		const FName BoneName, float HitTime, class AOFWeapon* DamageCauser);
-	
-	UFUNCTION(Server, Reliable)
 	void ProjectileServerScoreRequest(AOverfrontCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, 
-		const FName BoneName, float HitTime, TSubclassOf<UDamageType> DamageType);
+		const FName BoneName, float HitTime, AOFWeapon* DamageCauser);
 	
 protected:
 	virtual void BeginPlay() override;

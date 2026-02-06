@@ -68,44 +68,28 @@ void AOFProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 {
 	if (!HasAuthority()) return;
 	
-	if (AOverfrontCharacter* OwnerCharacter = Cast<AOverfrontCharacter>(GetOwner()))
+	AOverfrontCharacter* OwnerCharacter = Cast<AOverfrontCharacter>(GetInstigator());
+	AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(OtherActor);
+	if (!HitCharacter || !OwnerCharacter) return;
+	
+	AOFPlayerController* OwnerController = Cast<AOFPlayerController>(OwnerCharacter->GetController());
+	if (!OwnerController) return;
+	
+	if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
 	{
-		if (AOFPlayerController* OwnerController = Cast<AOFPlayerController>(OwnerCharacter->GetController()))
+		if (HasAuthority())
 		{
-			if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
-			{
-				if (HasAuthority())
-				{
-					if (bUseServerSideRewind && OwnerController->IsLocalController()) return;
-					FVector ShotDirection = (HitResult.ImpactPoint - StartLocation).GetSafeNormal();
-					UGameplayStatics::ApplyPointDamage(OtherActor, WeaponDamage->BaseDamage, ShotDirection, HitResult, OwnerController, this, DamageType);
-				}
-				else if (bUseServerSideRewind)
-				{
-					if (OwnerCharacter->GetLagCompensationComponent())
-					{
-						if (AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(OtherActor))
-						{
-							OwnerCharacter->GetLagCompensationComponent()->ProjectileServerScoreRequest(HitCharacter, StartLocation, HitResult.ImpactPoint, HitResult.BoneName,
-								OwnerController->GetServerTime() - OwnerController->SingleTripTime, DamageType);
-						}
-					}
-				}
-				// UGameplayStatics::ApplyPointDamage(OtherActor, WeaponDamage->BaseDamage, ShotDirection, HitResult, OwnerController, this, DamageType);
-			}
+			if (bUseServerSideRewind && OwnerController->IsLocalController()) return;
+			FVector ShotDirection = (HitResult.ImpactPoint - StartLocation).GetSafeNormal();
+			UGameplayStatics::ApplyPointDamage(OtherActor, WeaponDamage->BaseDamage, ShotDirection, HitResult, OwnerController, this, DamageType);
+		}
+		else if (bUseServerSideRewind && OwnerCharacter->GetLagCompensationComponent())
+		{
 			
-		
-			// if (OwnerCharacter->HasAuthority())
-			// {
-			// 	
-			// }
-			//
-			// FVector ShotDirection = (HitResult.ImpactPoint - StartLocation).GetSafeNormal();
-			// if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
-			// {
-			// 	UGameplayStatics::ApplyPointDamage(OtherActor, WeaponDamage->BaseDamage, ShotDirection, HitResult, OwnerController, this, DamageType);
-			// }
+			OwnerCharacter->GetLagCompensationComponent()->ProjectileServerScoreRequest(HitCharacter, StartLocation, HitResult.ImpactPoint, HitResult.BoneName,
+				OwnerController->GetServerTime() - OwnerController->SingleTripTime, GetOwningWeapon());
 		}
 	}
+	
 	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, HitResult);
 }

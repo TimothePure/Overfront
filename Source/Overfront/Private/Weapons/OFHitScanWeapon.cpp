@@ -49,7 +49,7 @@ void AOFHitScanWeapon::Fire(const FVector& HitTarget)
 						
 						if (OwnerCharacter && OwnerPlayerController && OwnerCharacter->GetLagCompensationComponent())
 						{
-							OwnerCharacter->GetLagCompensationComponent()->ServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
+							OwnerCharacter->GetLagCompensationComponent()->HitscanServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
 								OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime,this);
 						}
 					}
