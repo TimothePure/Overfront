@@ -21,7 +21,6 @@ void UOFLagCompensationComponent::BeginPlay()
 	
 	FFramePackage Package;
 	SaveFramePackage(Package);
-	// ShowFramePackage(Package, FColor::Orange);
 }
 
 void UOFLagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -114,7 +113,8 @@ FShotgunServerSideRewindResult UOFLagCompensationComponent::ShotgunServerSideRew
 
 	for (AOverfrontCharacter* HitCharacter : HitCharacters)
 	{
-		FramesToCheck.Add(GetFrameToCheck(HitCharacter, HitTime));
+		FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
+		FramesToCheck.Add(FrameToCheck);
 	}
 
 	return ShotgunConfirmHit(FramesToCheck, TraceStart, HitLocations);
@@ -171,6 +171,7 @@ FFramePackage UOFLagCompensationComponent::InterpolateBetweenFrames(const FFrame
 	const float InterpFraction = FMath::Clamp((HitTime - OlderFrame.Time) / Distance, 0.0f, 1.0f);
 	FFramePackage InterpFramePackage;
 	InterpFramePackage.Time = HitTime;
+	InterpFramePackage.Character = OlderFrame.Character;
 	
 	for (auto& YoungerPair : YoungerFrame.HitBoxInfos)
 	{
@@ -296,14 +297,16 @@ FServerSideRewindResult UOFLagCompensationComponent::ProjectileConfirmHit(const 
 FShotgunServerSideRewindResult UOFLagCompensationComponent::ShotgunConfirmHit(const TArray<FFramePackage>& FramePackages,
 	const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
 {
+	for (auto& Frame : FramePackages)
+	{
+		if (Frame.Character == nullptr) return FShotgunServerSideRewindResult();
+	}
+	
 	FShotgunServerSideRewindResult ShotgunResult;
 	TArray<FFramePackage> CurrentFrames;
 	
 	for (const FFramePackage& Frame : FramePackages)
 	{
-		if (!Frame.Character) continue;
-		if (Frame.HitBoxInfos.Num() == 0) continue;
-		
 		FFramePackage CurrentFrame;
 		CurrentFrame.Character = Frame.Character;
 		CacheBoxPositions(Frame.Character, CurrentFrame);
