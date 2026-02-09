@@ -37,43 +37,60 @@ void AOFShotgun::FireShotgun(const TArray<FVector_NetQuantize> HitTargets)
 		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 		FVector Start = SocketTransform.GetLocation();
 
-		for (auto HitTarget : HitTargets)
+		for (const FVector_NetQuantize& HitTarget : HitTargets)
 		{
 			FHitResult FireHit;
 			WeaponTraceHit(Start, HitTarget, FireHit);
 
-			if (FireHit.bBlockingHit)
+			// purely cosmetic
+			FImpactContext Context{ FireHit, FireHit.GetActor() != nullptr };
+			UImpactResolver::ResolveImpactFX(GetWorld(), Context, ImpactData);
+		}
+
+		TMap<AOverfrontCharacter*, float> DamageMap;
+		TArray<AOverfrontCharacter*> HitCharacters;
+
+		if (!DamageType) return;
+
+		UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>();
+
+		if (!WeaponDamage) return;
+
+		for (const FVector& HitTarget : HitTargets)
+		{
+			FHitResult FireHit;
+			WeaponTraceHit(Start, HitTarget, FireHit);
+
+			AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor());
+
+			if (!HitCharacter) continue;
+
+			const float PelletDamage = WeaponDamage->DetermineDamageAmount(FireHit.BoneName);
+
+			DamageMap.FindOrAdd(HitCharacter) += PelletDamage;
+			HitCharacters.AddUnique(HitCharacter);
+		}
+
+		if (!HasAuthority() && bUseServerSideRewind)
+		{
+			OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(OwnerPawn) : OwnerCharacter;
+			OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(InstigatorController) : OwnerPlayerController;
+
+			if (OwnerCharacter && OwnerPlayerController && OwnerCharacter->GetLagCompensationComponent() && OwnerPawn->IsLocallyControlled())
 			{
-				FVector ShotDirection = (HitTarget - Start).GetSafeNormal();
-				AOverfrontCharacter* HitCharacter = Cast<AOverfrontCharacter>(FireHit.GetActor());
-				if (HitCharacter && InstigatorController)
-				{
-					if (UOFWeaponDamageType* WeaponDamage = DamageType->GetDefaultObject<UOFWeaponDamageType>())
-					{
-						if (HasAuthority())
-						{
-							if (bUseServerSideRewind && OwnerPawn && !OwnerPawn->IsLocallyControlled()) return;
-						
-							UGameplayStatics::ApplyPointDamage(HitCharacter, WeaponDamage->BaseDamage, ShotDirection, FireHit, InstigatorController, this, DamageType);
-						}
-						else if (bUseServerSideRewind)
-						{
-							OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(OwnerPawn) : OwnerCharacter;
-							OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(InstigatorController): OwnerPlayerController;
-						
-							if (OwnerCharacter && OwnerPlayerController && OwnerCharacter->GetLagCompensationComponent())
-							{
-								OwnerCharacter->GetLagCompensationComponent()->HitscanServerScoreRequest(HitCharacter, Start, FireHit.ImpactPoint, FireHit.BoneName,
-									OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime,this);
-							}
-						}
-					}
-				}
-				
-				FImpactContext Context { FireHit, (HitCharacter != nullptr) };
-				UImpactResolver::ResolveImpactFX(GetWorld(), Context, ImpactData);
+				OwnerCharacter->GetLagCompensationComponent()->ShotgunServerScoreRequest(HitCharacters, Start, HitTargets,
+					OwnerPlayerController->GetServerTime() - OwnerPlayerController->SingleTripTime, this);
 			}
 		}
+		else if (HasAuthority() && (!bUseServerSideRewind || OwnerPawn->IsLocallyControlled()))
+		{
+			for (const auto& Damage : DamageMap)
+			{
+				UGameplayStatics::ApplyDamage(Damage.Key, Damage.Value, InstigatorController, this, DamageType);
+			}
+		}
+		
+		
 	}
 }
 

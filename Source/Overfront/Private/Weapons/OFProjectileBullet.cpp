@@ -59,9 +59,9 @@ void AOFProjectileBullet::BeginPlay()
 	PathParams.StartLocation = GetActorLocation();
 	PathParams.TraceChannel = ECC_Visibility;
 	PathParams.ActorsToIgnore.Add(this);
-
+	
 	FPredictProjectilePathResult PathResult;
-
+	
 	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
 }
 
