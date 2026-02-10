@@ -44,6 +44,7 @@ void AOFWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AOFWeapon, WeaponState);
+	DOREPLIFETIME_CONDITION(AOFWeapon, bUseServerSideRewind, COND_OwnerOnly);
 }
 
 void AOFWeapon::SetHUDAmmo()
@@ -280,6 +281,16 @@ void AOFWeapon::OnEquipped()
 		WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	}
 	EnableCustomDepth(false);
+	
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(GetOwner()) : OwnerCharacter;
+	if (OwnerCharacter && bUseServerSideRewind)
+	{
+		OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(OwnerCharacter->GetController()) : OwnerPlayerController;
+		if (OwnerPlayerController && HasAuthority() && !OwnerPlayerController->HighPingDelegate.IsBound())
+		{
+			OwnerPlayerController->HighPingDelegate.AddDynamic(this, &AOFWeapon::OnPingTooHigh);
+		}
+	}
 }
 
 void AOFWeapon::OnDropped()
@@ -295,6 +306,18 @@ void AOFWeapon::OnDropped()
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	EnableCustomDepth(true);
+	
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(GetOwner()) : OwnerCharacter;
+	if (OwnerCharacter)
+	{
+		OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(OwnerCharacter->GetController()) : OwnerPlayerController;
+		if (OwnerPlayerController && HasAuthority() && OwnerPlayerController->HighPingDelegate.IsBound())
+		{
+			OwnerPlayerController->HighPingDelegate.RemoveDynamic(this, &AOFWeapon::OnPingTooHigh);
+		}
+	}
+	OwnerCharacter = nullptr;
+	OwnerPlayerController = nullptr;
 }
 
 void AOFWeapon::OnEquippedSecondary()
@@ -312,6 +335,15 @@ void AOFWeapon::OnEquippedSecondary()
 		WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	}
 	EnableCustomDepth(false);
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AOverfrontCharacter>(GetOwner()) : OwnerCharacter;
+	if (OwnerCharacter)
+	{
+		OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AOFPlayerController>(OwnerCharacter->GetController()) : OwnerPlayerController;
+		if (OwnerPlayerController && HasAuthority() && OwnerPlayerController->HighPingDelegate.IsBound())
+		{
+			OwnerPlayerController->HighPingDelegate.RemoveDynamic(this, &AOFWeapon::OnPingTooHigh);
+		}
+	}
 }
 
 bool AOFWeapon::IsEmpty() const
@@ -324,3 +356,7 @@ bool AOFWeapon::IsFull() const
 	return Ammo == MagCapacity;
 }
 
+void AOFWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = !bPingTooHigh;
+}

@@ -29,6 +29,8 @@ struct FPendingHUDData
 	EWeaponType WeaponType = EWeaponType::EWT_MAX;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
+
 /**
  * 
  */
@@ -73,6 +75,8 @@ public:
 	void OnMatchStateSet(FName State);
 	
 	float SingleTripTime = 0.f;
+	
+	FHighPingDelegate HighPingDelegate;
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
@@ -140,6 +144,9 @@ private:
 	FTimerHandle CheckPingTimerHandle;
 	FTimerHandle PingWarningTimerHandle;
 	
+	UFUNCTION(Server, Reliable)
+	void ServerReportPingStatus(bool bHighPing);
+	
 	UPROPERTY(EditAnywhere, Category = "Ping")
 	float HighPingWarningDuration = 5.f;
 	
@@ -147,5 +154,5 @@ private:
 	float CheckPingFrequency = 10.f;
 	
 	UPROPERTY(EditAnywhere, Category = "Ping")
-	float HighPingThreshold = 50.f;
+	float HighPingThreshold = 100.f;
 }; 

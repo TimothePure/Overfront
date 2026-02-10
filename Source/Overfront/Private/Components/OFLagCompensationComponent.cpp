@@ -214,8 +214,6 @@ FServerSideRewindResult UOFLagCompensationComponent::HitscanConfirmHit(const FFr
 			{
 				if (UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component))
 				{
-					DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 8.f);
-					
 					for (const auto& Pair : HitCharacter->HitBoxes)
 					{
 						if (Pair.Value == Box)

@@ -3,7 +3,6 @@
 
 #include "PlayerController/OFPlayerController.h"
 
-#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Character/OverfrontCharacter.h"
 #include "Components/Image.h"
@@ -147,10 +146,6 @@ void AOFPlayerController::SetHUDShield(float Shield, float MaxShield)
     if (HUD && HUD->CharacterOverlay && HUD->CharacterOverlay->ShieldBar && HUD->CharacterOverlay->ShieldText)
     {
         HUD->CharacterOverlay->SetShield(Shield, MaxShield);
-        // const float ShieldPercent = Shield / MaxShield;
-        // HUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
-        // FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
-        // HUD->CharacterOverlay->ShieldText->SetText(FText::FromString(HealthText));
     } else
     {
         PendingHUDData.bPendingData = true;
@@ -575,5 +570,14 @@ void AOFPlayerController::CheckPing()
     {
         StartHighPingWarning();
         GetWorldTimerManager().SetTimer(PingWarningTimerHandle, this, &ThisClass::StopHighPingWarning, HighPingWarningDuration, false);
+        ServerReportPingStatus(true);
+    } else
+    {
+        ServerReportPingStatus(false);
     }
+}
+
+void AOFPlayerController::ServerReportPingStatus_Implementation(bool bHighPing)
+{
+    HighPingDelegate.Broadcast(bHighPing);
 }

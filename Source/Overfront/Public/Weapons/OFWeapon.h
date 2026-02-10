@@ -126,7 +126,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Weapon scatter")
 	float SphereRadius = 75.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Server Rewind")
+	UPROPERTY(Replicated, EditAnywhere, Category = "Server Rewind")
 	bool bUseServerSideRewind = false;
 	
 	UPROPERTY()
@@ -134,6 +134,10 @@ protected:
 
 	UPROPERTY()
 	class AOFPlayerController* OwnerPlayerController;
+
+	UFUNCTION()
+	void OnPingTooHigh(bool bPingTooHigh);
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	USkeletalMeshComponent* WeaponMesh;
