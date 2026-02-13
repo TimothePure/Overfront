@@ -476,7 +476,7 @@ void AOverfrontCharacter::ThrowGrenadeInput(const FInputActionValue& Value)
 void AOverfrontCharacter::HideCharacterIfCameraClose()
 {
 	if (!IsLocallyControlled()) return;
-	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < PlayerHideThresold)
+	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < PlayerHideThreshold)
 	{
 		GetMesh()->SetVisibility(false);
 		if (CombatComponent && CombatComponent->EquippedWeapon && CombatComponent->EquippedWeapon->GetWeaponMesh())
@@ -572,12 +572,12 @@ void AOverfrontCharacter::SimProxiesTurn()
 	ProxyRotation = GetActorRotation();
 	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
 
-	if (FMath::Abs(ProxyYaw) > TurnThresold)
+	if (FMath::Abs(ProxyYaw) > TurnThreshold)
 	{
-		if (ProxyYaw > TurnThresold)
+		if (ProxyYaw > TurnThreshold)
 		{
 			TurningInPlace = ETurningInPlace::ETIP_Right;
-		} else if (ProxyYaw < -TurnThresold)
+		} else if (ProxyYaw < -TurnThreshold)
 		{
 			TurningInPlace = ETurningInPlace::ETIP_Left;
 		} else
@@ -626,7 +626,7 @@ void AOverfrontCharacter::OnRep_OverlappingWeapon(AOFWeapon* LastWeapon) const
 	}
 }
 
-void AOverfrontCharacter::PlayFireMontage(bool bAiming)
+void AOverfrontCharacter::PlayFireMontage(bool bAiming) const
 {
 	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
 
@@ -640,7 +640,7 @@ void AOverfrontCharacter::PlayFireMontage(bool bAiming)
 	}
 }
 
-void AOverfrontCharacter::PlayHitReactMontage()
+void AOverfrontCharacter::PlayHitReactMontage() const
 {
 	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
 
@@ -653,7 +653,7 @@ void AOverfrontCharacter::PlayHitReactMontage()
 	}
 }
 
-void AOverfrontCharacter::PlayReloadMontage()
+void AOverfrontCharacter::PlayReloadMontage() const
 {
 	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
 
@@ -692,12 +692,23 @@ void AOverfrontCharacter::PlayReloadMontage()
 	}
 }
 
-void AOverfrontCharacter::PlayThrowGrenadeMontage()
+void AOverfrontCharacter::PlayThrowGrenadeMontage() const
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ThrowGrenadeMontage)
 	{
 		AnimInstance->Montage_Play(ThrowGrenadeMontage);
+	}
+}
+
+void AOverfrontCharacter::PlaySwapWeaponsMontage() const
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, TEXT("Play Swap Montage function called"));
+	
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && SwapWeaponsMontage)
+	{
+		AnimInstance->Montage_Play(SwapWeaponsMontage);
 	}
 }
 

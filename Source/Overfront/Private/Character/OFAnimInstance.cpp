@@ -75,9 +75,9 @@ void UOFAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	bUseFABRIK = Character->GetCombatState() == ECombatState::ECS_Unoccupied;
-	if (Character->IsLocallyControlled() && Character->GetCombatState() == ECombatState::ECS_ThrowingGrenade) 
+	if (Character->IsLocallyControlled() && Character->GetCombatState() != ECombatState::ECS_ThrowingGrenade) 
 	{
-		bUseFABRIK = !Character->IsLocallyReloading();
+		bUseFABRIK = !Character->IsLocallyReloading() && !Character->GetIsSwapping();
 	}
 	bUseAimOffsets = Character->GetCombatState() == ECombatState::ECS_Unoccupied;
 	bTransformRightHand = Character->GetCombatState() == ECombatState::ECS_Unoccupied;

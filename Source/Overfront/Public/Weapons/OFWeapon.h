@@ -82,6 +82,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Weapon|Sounds")
 	USoundBase* EquipSound;
 	
+	UPROPERTY(EditAnywhere, Category = "Weapon|Sounds")
+	USoundBase* SwapSound;
+	
 	/** Enable or disable custom depth **/
 	void EnableCustomDepth(bool bEnable);
 	

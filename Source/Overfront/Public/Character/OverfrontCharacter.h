@@ -75,10 +75,13 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
-	void PlayFireMontage(bool bAiming);
-	void PlayReloadMontage();
 	
-	void PlayThrowGrenadeMontage();
+	/** Play Montages **/
+	void PlayFireMontage(bool bAiming) const;
+	void PlayReloadMontage() const;
+	void PlayHitReactMontage() const;
+	void PlayThrowGrenadeMontage() const;
+	void PlaySwapWeaponsMontage() const;
 
 	virtual void OnRep_ReplicatedMovement() override;
 
@@ -154,7 +157,6 @@ protected:
 	void ThrowGrenadeInput(const FInputActionValue& Value);
 	
 	void SimProxiesTurn();
-	void PlayHitReactMontage();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser);
@@ -266,16 +268,19 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimMontage* ThrowGrenadeMontage;
+	
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	UAnimMontage* SwapWeaponsMontage;
 
 	/** Hiding Character from Camera **/
 	void HideCharacterIfCameraClose();
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-	float PlayerHideThresold = 200.f;
+	float PlayerHideThreshold = 200.f;
 
 	/** Rotation Movement Replication **/
 	bool bRotateRootBone;
-	float TurnThresold = 0.5f;
+	float TurnThreshold = 0.5f;
 	FRotator ProxyRotationLastFrame;
 	FRotator ProxyRotation;
 	float ProxyYaw;
@@ -320,6 +325,8 @@ private:
 	/** Default Weapon **/
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AOFWeapon> DefaultWeaponClass;
+	
+	bool bIsSwapping = false;
 public:
 	/** Getters and Setters **/
 	void SetOverlappingWeapon(AOFWeapon* Weapon);
@@ -346,6 +353,8 @@ public:
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 	bool IsLocallyReloading();
-	FORCEINLINE UOFLagCompensationComponent* GetLagCompensationComponent() { return LagCompensationComponent; }
+	FORCEINLINE UOFLagCompensationComponent* GetLagCompensationComponent() const { return LagCompensationComponent; }
 	float GetCarriedAmmo();
+	FORCEINLINE void SetIsSwapping(bool bSwapping) { bIsSwapping = bSwapping; }
+	FORCEINLINE bool GetIsSwapping() const { return bIsSwapping; }
 };

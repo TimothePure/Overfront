@@ -35,6 +35,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
+	
+	UFUNCTION(BlueprintCallable)
+	void FinishSwap();
+	
+	UFUNCTION(BlueprintCallable)
+	void SwapAttachedWeapon();
 
 	UFUNCTION(BlueprintCallable)
 	void ShotgunShellReload();
@@ -115,6 +121,7 @@ protected:
 	
 	void UpdateCarriedAmmo();
 	void PlayEquipWeaponSound(AOFWeapon* WeaponToEquip);
+	void PlaySwapWeaponSound(AOFWeapon* WeaponToEquip);
 	void ReloadWeaponIfEmpty();
 	
 	

@@ -244,7 +244,7 @@ bool UOFCombatComponent::CanFire()
 void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr || CombatState != ECombatState::ECS_Unoccupied) return;
-
+	
 	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
 	{
 		EquipSecondaryWeapon(WeaponToEquip);
@@ -255,37 +255,6 @@ void UOFCombatComponent::EquipWeapon(AOFWeapon* WeaponToEquip)
 	
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
-}
-
-void UOFCombatComponent::SwapWeapons()
-{
-	if (CombatState != ECombatState::ECS_Unoccupied) return;
-	
-	ServerSwapWeapons();
-}
-
-void UOFCombatComponent::ServerSwapWeapons_Implementation()
-{
-	if (!EquippedWeapon || !SecondaryWeapon) return;
-	
-	AOFWeapon* TempWeapon = EquippedWeapon;
-	EquippedWeapon = SecondaryWeapon;
-	SecondaryWeapon = TempWeapon;
-
-	// For Primary Weapon
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	AttachActorToRightHand(EquippedWeapon);
-	EquippedWeapon->SetOwner(Character);
-	EquippedWeapon->SetHUDAmmo();
-	EquippedWeapon->SetHUDWeaponType();
-	PlayEquipWeaponSound(EquippedWeapon);
-	UpdateCarriedAmmo();
-	ReloadWeaponIfEmpty();
-
-	// For secondary Weapon
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttachActorToBack(SecondaryWeapon);
-	SecondaryWeapon->SetOwner(Character);
 }
 
 void UOFCombatComponent::EquipPrimaryWeapon(AOFWeapon* WeaponToEquip)
@@ -333,8 +302,8 @@ void UOFCombatComponent::OnRep_EquippedWeapon()
 		AttachActorToRightHand(EquippedWeapon);
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
-		PlayEquipWeaponSound(EquippedWeapon);
 		EquippedWeapon->SetHUDAmmo(); 
+		// PlayEquipWeaponSound(EquippedWeapon);
 	}
 }
 
@@ -353,6 +322,63 @@ void UOFCombatComponent::DroppedEquippedWeapon()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Dropped();
+	}
+}
+
+void UOFCombatComponent::SwapWeapons()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied || !Character) return;
+	
+	Character->PlaySwapWeaponsMontage();
+	CombatState = ECombatState::ECS_SwappingWeapons;
+	Character->SetIsSwapping(true);
+	
+	ServerSwapWeapons();
+}
+
+void UOFCombatComponent::ServerSwapWeapons_Implementation()
+{
+	if (!EquippedWeapon || !SecondaryWeapon || !Character) return;
+	
+	Character->PlaySwapWeaponsMontage();
+	CombatState = ECombatState::ECS_SwappingWeapons;
+	Character->SetIsSwapping(true);
+}
+
+void UOFCombatComponent::SwapAttachedWeapon()
+{
+	AOFWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
+	
+	// For Primary Weapon
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachActorToRightHand(EquippedWeapon);
+	EquippedWeapon->SetHUDAmmo();
+	EquippedWeapon->SetHUDWeaponType();
+	UpdateCarriedAmmo();
+	
+	// PlayEquipWeaponSound(EquippedWeapon);
+
+	// For secondary Weapon
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBack(SecondaryWeapon);
+}
+
+void UOFCombatComponent::FinishSwap()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, TEXT("Finish Swap function called"));
+	
+	if (Character && Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+	
+	PlayEquipWeaponSound(EquippedWeapon);
+	
+	if (Character)
+	{
+		Character->SetIsSwapping(false);
 	}
 }
 
@@ -412,6 +438,14 @@ void UOFCombatComponent::PlayEquipWeaponSound(AOFWeapon* WeaponToEquip)
 	if (Character && WeaponToEquip && WeaponToEquip->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, WeaponToEquip->EquipSound, Character->GetActorLocation());
+	}
+}
+
+void UOFCombatComponent::PlaySwapWeaponSound(AOFWeapon* WeaponToEquip)
+{
+	if (Character && WeaponToEquip && WeaponToEquip->SwapSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, WeaponToEquip->SwapSound, Character->GetActorLocation());
 	}
 }
 
@@ -873,6 +907,12 @@ void UOFCombatComponent::OnRep_CombatState()
 				Character->PlayThrowGrenadeMontage();
 				AttachActorToLeftHand(EquippedWeapon);
 				ShowAttachedGrenade(true);
+			}
+			break;
+		case ECombatState::ECS_SwappingWeapons:
+			if (Character && !Character->IsLocallyControlled())
+			{
+				Character->PlaySwapWeaponsMontage();
 			}
 			break;
 		default: break;

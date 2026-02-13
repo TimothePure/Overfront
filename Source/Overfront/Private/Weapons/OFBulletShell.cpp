@@ -20,6 +20,10 @@ void AOFBulletShell::BeginPlay()
 	
 	ShellMesh->OnComponentHit.AddDynamic(this, &AOFBulletShell::OnHit);
 	ShellMesh->AddImpulse(GetActorForwardVector() * ShellEjectionImpulse);
+	
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, [this]() { Destroy(); }, 5.0f, false);
+	ShellMesh->OnComponentHit.RemoveDynamic(this, &AOFBulletShell::OnHit);
 }
 
 void AOFBulletShell::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -29,9 +33,5 @@ void AOFBulletShell::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPr
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ShellSound, GetActorLocation());
 	}
-	
-	FTimerHandle TimerHandle;
-	GetWorldTimerManager().SetTimer(TimerHandle, [this]() { Destroy(); }, 5.0f, false);
-	ShellMesh->OnComponentHit.RemoveDynamic(this, &AOFBulletShell::OnHit);
 }
 
