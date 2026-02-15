@@ -252,6 +252,10 @@ void AOverfrontCharacter::BeginPlay()
 	}
 	
 	SpawnDefaultWeapon();
+	
+	// Offsets calculation for camera spring arm when crouching
+	BaseSpringArmOffset = SpringArm->SocketOffset;
+	CrouchedSpringArmOffset = FVector(BaseSpringArmOffset.X, BaseSpringArmOffset.Y, CrouchedSpringArmHeightOffset);
 }
 
 void AOverfrontCharacter::Destroyed()
@@ -312,11 +316,15 @@ void AOverfrontCharacter::LookInput(const FInputActionValue& Value)
 void AOverfrontCharacter::CrouchInputStart(const FInputActionValue& Value)
 {
 	Crouch();
+	TargetSpringArmOffset = CrouchedSpringArmOffset;
+	GetWorldTimerManager().SetTimer(SpringArmInterpHandle, this, &AOverfrontCharacter::InterpSpringArmSocketOffset, 0.01f, true);
 }
 
 void AOverfrontCharacter::CrouchInputStop(const FInputActionValue& Value)
 {
 	UnCrouch();
+	TargetSpringArmOffset = BaseSpringArmOffset;
+	GetWorldTimerManager().SetTimer(SpringArmInterpHandle, this, &AOverfrontCharacter::InterpSpringArmSocketOffset, 0.01f, true);
 }
 
 void AOverfrontCharacter::EnterRagdollState()
@@ -490,6 +498,19 @@ void AOverfrontCharacter::HideCharacterIfCameraClose()
 		{
 			CombatComponent->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
+	}
+}
+
+void AOverfrontCharacter::InterpSpringArmSocketOffset()
+{
+	const float DeltaTime = GetWorld()->GetDeltaSeconds();
+
+	SpringArm->SocketOffset = FMath::VInterpTo(SpringArm->SocketOffset, TargetSpringArmOffset, DeltaTime, SpringArmSocketInterpSpeed);
+
+	if (SpringArm->SocketOffset.Equals(TargetSpringArmOffset, 0.1f))
+	{
+		SpringArm->SocketOffset = TargetSpringArmOffset;
+		GetWorldTimerManager().ClearTimer(SpringArmInterpHandle);
 	}
 }
 

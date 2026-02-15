@@ -327,6 +327,24 @@ private:
 	TSubclassOf<AOFWeapon> DefaultWeaponClass;
 	
 	bool bIsSwapping = false;
+	
+	/** Crouch Camera **/ 
+	UPROPERTY()
+	FVector BaseSpringArmOffset;
+	
+	UPROPERTY()
+	FVector CrouchedSpringArmOffset;
+	
+	UPROPERTY(EditAnywhere, Category = "Spring Arm")
+	float CrouchedSpringArmHeightOffset = 15.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Spring Arm")
+	float SpringArmSocketInterpSpeed = 12.f;
+	
+	FTimerHandle SpringArmInterpHandle;
+	FVector TargetSpringArmOffset;
+	void InterpSpringArmSocketOffset();
+	
 public:
 	/** Getters and Setters **/
 	void SetOverlappingWeapon(AOFWeapon* Weapon);
