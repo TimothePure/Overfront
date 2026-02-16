@@ -135,7 +135,7 @@ void UOFCombatComponent::FireProjectileWeapon()
 		{
 			LocalFire(Target);
 		}
-		ServerFire(Target);
+		ServerFire(Target, EquippedWeapon->FireDelay);
 	}
 }
 
@@ -148,7 +148,7 @@ void UOFCombatComponent::FireHitScanWeapon()
 		{
 			LocalFire(Target);
 		}
-		ServerFire(Target);
+		ServerFire(Target, EquippedWeapon->FireDelay);
 	}
 }
 
@@ -162,7 +162,7 @@ void UOFCombatComponent::FireShotgun()
 		{
 			LocalShotgunFire(HitTargets);
 		}
-		ServerShotgunFire(HitTargets);
+		ServerShotgunFire(HitTargets, ShotgunWeapon->FireDelay);
 	}
 }
 
@@ -206,9 +206,18 @@ void UOFCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Tra
 	}	
 }
 
-void UOFCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+void UOFCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
 {
 	MulticastFire(TraceHitTarget);
+}
+
+bool UOFCombatComponent::ServerFire_Validate(const FVector_NetQuantize& TraceHitTarget, float FireDelay)
+{
+	if (EquippedWeapon)
+	{
+		return FMath::IsNearlyEqual(EquippedWeapon->FireDelay, FireDelay, 0.001f);
+	}
+	return true;
 }
 
 void UOFCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -217,9 +226,18 @@ void UOFCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize&
 	LocalFire(TraceHitTarget);
 }
 
-void UOFCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
+void UOFCombatComponent::ServerShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay)
 {
 	MulticastShotgunFire(TraceHitTargets);
+}
+
+bool UOFCombatComponent::ServerShotgunFire_Validate(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay)
+{
+	if (EquippedWeapon)
+	{
+		return FMath::IsNearlyEqual(EquippedWeapon->FireDelay, FireDelay, 0.001f);
+	}
+	return true;
 }
 
 void UOFCombatComponent::MulticastShotgunFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
