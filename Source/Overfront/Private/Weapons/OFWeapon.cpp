@@ -88,8 +88,11 @@ void AOFWeapon::OnRep_Owner()
 		OwnerPlayerController = nullptr;
 	} else
 	{
-		SetHUDAmmo();
-		SetHUDWeaponType();
+		if (WeaponState == EWeaponState::EWS_Equipped)
+		{
+			SetHUDAmmo();
+			SetHUDWeaponType();
+		}
 	}
 }
 
