@@ -61,9 +61,11 @@ void AOFProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 			{
 				if (HasAuthority())
 				{
-					if (bUseServerSideRewind && OwnerController->IsLocalController()) return;
-					AOFWeapon* WeaponInstigator = Cast<AOFWeapon>(GetOwner());
-					UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(HitResult.BoneName), OwnerController, WeaponInstigator, WeaponInstigator->DamageType);
+					if (!!bUseServerSideRewind || !OwnerController->IsLocalController())
+					{
+						AOFWeapon* WeaponInstigator = Cast<AOFWeapon>(GetOwner());
+						UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(HitResult.BoneName), OwnerController, WeaponInstigator, WeaponInstigator->DamageType);
+					}
 				}
 				else if (bUseServerSideRewind && OwnerCharacter->GetLagCompensationComponent())
 				{
