@@ -231,6 +231,7 @@ private:
 	void OnRep_CombatState();
 
 	void UpdateAmmoValues();
+	void UpdateAmmoValuesLocally();
 	void UpdateShotgunAmmoValues();
 	void ShowAttachedGrenade(bool bShowGrenade);
 	

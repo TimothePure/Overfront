@@ -194,5 +194,6 @@ public:
 	bool IsFull() const;
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE void SetAmmo(int32 NewAmmo) { Ammo = NewAmmo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 };
