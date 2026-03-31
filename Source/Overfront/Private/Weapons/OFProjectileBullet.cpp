@@ -61,7 +61,7 @@ void AOFProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 			{
 				if (HasAuthority())
 				{
-					if (!!bUseServerSideRewind || !OwnerController->IsLocalController())
+					if (!bUseServerSideRewind || !OwnerController->IsLocalController())
 					{
 						AOFWeapon* WeaponInstigator = Cast<AOFWeapon>(GetOwner());
 						UGameplayStatics::ApplyDamage(HitCharacter, WeaponDamage->DetermineDamageAmount(HitResult.BoneName), OwnerController, WeaponInstigator, WeaponInstigator->DamageType);
