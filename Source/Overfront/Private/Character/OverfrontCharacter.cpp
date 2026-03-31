@@ -668,7 +668,7 @@ void AOverfrontCharacter::PlayHitReactMontage() const
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && HitReactMontage)
 	{
-		AnimInstance->Montage_Play(HitReactMontage);
+		AnimInstance->Montage_Play(HitReactMontage, 1.f, EMontagePlayReturnType::MontageLength, 0.f, false);
 		FName SectionName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
@@ -681,7 +681,7 @@ void AOverfrontCharacter::PlayReloadMontage() const
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ReloadMontage)
 	{
-		AnimInstance->Montage_Play(ReloadMontage);
+		AnimInstance->Montage_Play(ReloadMontage, 1.f, EMontagePlayReturnType::MontageLength, 0.f, false);
 		FName SectionName;
 
 		switch (CombatComponent->EquippedWeapon->GetWeaponType())
